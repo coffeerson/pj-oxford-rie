@@ -4,9 +4,11 @@
 #include <QWidget>
 #include <QGraphicsView>
 #include <QGraphicsScene>
+#include <QGraphicsSceneMouseEvent>
 #include <QGraphicsItemGroup>
 #include <QMap>
 #include <QString>
+#include <QObject>
 
 /**
  * HardwareDiagram - Oxford ICP133 RIE 设备硬件框架图
@@ -73,6 +75,7 @@ public:
 
 protected:
     void updateAppearance() override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
 // RF 发生器
@@ -119,6 +122,7 @@ public:
 
 protected:
     void updateAppearance() override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     bool m_open;
 };
 
@@ -130,6 +134,7 @@ public:
 
 protected:
     void updateAppearance() override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
 // 压力计
@@ -192,6 +197,9 @@ public:
 
     // 获取组件
     HardwareComponent* getComponent(const QString &name) const;
+
+    // 添加管道线
+    void addPipeLine(qreal x1, qreal y1, qreal x2, qreal y2, const QPen &pen);
 
 signals:
     void componentClicked(const QString &name, ComponentType type);

@@ -4,28 +4,142 @@
 #include <QBrush>
 #include <QGraphicsSceneMouseEvent>
 #include <QDebug>
+#include <QGraphicsSimpleTextItem>
 
-// Oxford PC 2000 原厂配色
-static const QColor C_WIN_GRAY(192, 192, 192);       // Windows 经典灰背景
-static const QColor C_WIN_DARK(128, 128, 128);       // 深灰
-static const QColor C_WIN_MEDIUM(160, 160, 160);     // 中灰
-static const QColor C_WIN_LIGHT(224, 224, 224);       // 浅灰
-static const QColor C_TITLE_BLUE(0, 0, 128);          // 标题栏深蓝
-static const QColor C_TITLE_BLUE_LIGHT(24, 24, 240); // 标题栏浅蓝
-static const QColor C_LED_GREEN(0, 255, 0);           // LED 亮绿
-static const QColor C_LED_GREEN_DARK(0, 64, 0);      // LED 暗绿
-static const QColor C_LED_RED(255, 0, 0);            // LED 红
-static const QColor C_LED_RED_DARK(64, 0, 0);        // LED 暗红
-static const QColor C_LED_BLUE(0, 0, 255);           // LED 蓝
-static const QColor C_PIPE_ACTIVE(0, 0, 200);        // 管道激活（蓝）
-static const QColor C_PIPE_INACTIVE(64, 64, 64);      // 管道非激活
-static const QColor C_CHAMBER_OUTER(100, 100, 100);  // 腔室外圈
-static const QColor C_CHAMBER_INNER(160, 160, 160);  // 腔室内圈
-static const QColor C_CHAMBER_CENTER(40, 40, 40);    // 腔室中心
-static const QColor C_BELLOW(80, 80, 80);            // 波纹管
+// Oxford PC 2000 原厂配色精确值
+static const QColor C_WIN_GRAY(192, 192, 192);        // Windows 经典灰
+static const QColor C_WIN_DARK(128, 128, 128);         // 深灰 3D阴影
+static const QColor C_WIN_MEDIUM(160, 160, 160);       // 中灰
+static const QColor C_WIN_LIGHT(224, 224, 224);        // 浅灰 3D高光
+static const QColor C_MIMIC_BG(160, 160, 160);         // Mimic 区域背景
+static const QColor C_TITLE_BLUE(0, 0, 128);           // 标题栏深蓝
+static const QColor C_LED_GREEN(0, 200, 0);            // LED 亮绿
+static const QColor C_LED_GREEN_DARK(0, 100, 0);       // LED 暗绿
+static const QColor C_LED_RED(255, 0, 0);              // LED 红
+static const QColor C_LED_RED_DARK(180, 0, 0);         // LED 暗红
+static const QColor C_LED_AMBER(255, 180, 0);          // LED 琥珀色
+static const QColor C_LED_AMBER_DARK(180, 100, 0);     // LED 暗琥珀
+static const QColor C_PIPE_BLACK(0, 0, 0);             // 管道黑色
+static const QColor C_CHAMBER_OUTER(80, 80, 80);       // 腔室外圈深灰
+static const QColor C_CHAMBER_MID(120, 120, 120);      // 腔室中圈
+static const QColor C_CHAMBER_INNER(180, 180, 180);    // 腔室内圈浅灰
+static const QColor C_WHITE(255, 255, 255);            // 白色
 
-// ==================== HardwareComponent ====================
+// ==================== InteractiveButton 类 ====================
+class InteractiveButton : public QGraphicsItemGroup
+{
+public:
+    InteractiveButton(const QString &text, QGraphicsItem *parent = nullptr)
+        : QGraphicsItemGroup(parent), m_text(text), m_pressed(false), m_hovered(false)
+    {
+        setHandlesChildEvents(true);
+        setAcceptHoverEvents(true);
+        setFlag(QGraphicsItem::ItemIsSelectable);
 
+        // 按钮背景
+        m_bg = new QGraphicsRectItem(-40, -12, 80, 24, this);
+        m_bg->setBrush(QBrush(C_WIN_GRAY));
+        m_bg->setPen(QPen(C_WIN_DARK, 1));
+        m_bg->setZValue(0);
+
+        // 3D 高光顶边
+        m_topLine = new QGraphicsLineItem(-39, -11, 39, -11, this);
+        m_topLine->setPen(QPen(C_WHITE, 1));
+        m_topLine->setZValue(1);
+
+        // 3D 高光左边
+        m_leftLine = new QGraphicsLineItem(-39, -11, -39, 11, this);
+        m_leftLine->setPen(QPen(C_WHITE, 1));
+        m_leftLine->setZValue(1);
+
+        // 3D 阴影底边
+        m_bottomLine = new QGraphicsLineItem(-39, 11, 39, 11, this);
+        m_bottomLine->setPen(QPen(C_WIN_DARK, 1));
+        m_bottomLine->setZValue(1);
+
+        // 3D 阴影右边
+        m_rightLine = new QGraphicsLineItem(39, -11, 39, 11, this);
+        m_rightLine->setPen(QPen(C_WIN_DARK, 1));
+        m_rightLine->setZValue(1);
+
+        // 文字
+        m_label = new QGraphicsSimpleTextItem(text, this);
+        m_label->setFont(QFont("Arial", 9));
+        m_label->setBrush(QBrush(Qt::black));
+        m_label->setPos(-m_label->boundingRect().width()/2, -8);
+        m_label->setZValue(2);
+    }
+
+    void setText(const QString &text) {
+        m_text = text;
+        m_label->setText(text);
+        m_label->setPos(-m_label->boundingRect().width()/2, -8);
+    }
+
+    QString text() const { return m_text; }
+
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override {
+        m_pressed = true;
+        updateAppearance();
+        QGraphicsItemGroup::mousePressEvent(event);
+    }
+
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override {
+        m_pressed = false;
+        updateAppearance();
+        QGraphicsItemGroup::mouseReleaseEvent(event);
+        qDebug() << "Button clicked:" << m_text;
+    }
+
+    void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override {
+        m_hovered = true;
+        updateAppearance();
+        QGraphicsItemGroup::hoverEnterEvent(event);
+    }
+
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override {
+        m_hovered = false;
+        m_pressed = false;
+        updateAppearance();
+        QGraphicsItemGroup::hoverLeaveEvent(event);
+    }
+
+private:
+    void updateAppearance() {
+        if (m_pressed) {
+            // 凹陷效果
+            m_bg->setBrush(QBrush(C_WIN_MEDIUM));
+            m_topLine->setPen(QPen(C_WIN_DARK, 1));
+            m_leftLine->setPen(QPen(C_WIN_DARK, 1));
+            m_bottomLine->setPen(QPen(C_WHITE, 1));
+            m_rightLine->setPen(QPen(C_WHITE, 1));
+        } else if (m_hovered) {
+            // 悬停效果
+            m_bg->setBrush(QBrush(C_WIN_LIGHT));
+            m_topLine->setPen(QPen(C_WHITE, 2));
+            m_leftLine->setPen(QPen(C_WHITE, 2));
+            m_bottomLine->setPen(QPen(C_WIN_DARK, 2));
+            m_rightLine->setPen(QPen(C_WIN_DARK, 2));
+        } else {
+            // 默认凸起效果
+            m_bg->setBrush(QBrush(C_WIN_GRAY));
+            m_topLine->setPen(QPen(C_WHITE, 1));
+            m_leftLine->setPen(QPen(C_WHITE, 1));
+            m_bottomLine->setPen(QPen(C_WIN_DARK, 1));
+            m_rightLine->setPen(QPen(C_WIN_DARK, 1));
+        }
+    }
+
+    QString m_text;
+    bool m_pressed;
+    bool m_hovered;
+    QGraphicsRectItem *m_bg;
+    QGraphicsLineItem *m_topLine, *m_leftLine, *m_bottomLine, *m_rightLine;
+    QGraphicsSimpleTextItem *m_label;
+};
+
+// ==================== HardwareComponent 基类 ====================
 HardwareComponent::HardwareComponent(const QString &name, ComponentType type, QGraphicsItem *parent)
     : QGraphicsItemGroup(parent)
     , m_name(name)
@@ -52,7 +166,9 @@ void HardwareComponent::setState(ComponentState state)
 void HardwareComponent::setValue(const QString &value)
 {
     m_value = value;
-    m_valueText->setPlainText(value);
+    if (m_valueText) {
+        m_valueText->setPlainText(value);
+    }
 }
 
 QRectF HardwareComponent::boundingRect() const
@@ -60,19 +176,47 @@ QRectF HardwareComponent::boundingRect() const
     return QRectF(0, -20, 60, 55);
 }
 
-// ==================== ChamberItem ====================
-// 腔室：大圆形，同心圆结构，十字准星中心
+// ==================== LEDIndicator 类 ====================
+class LEDIndicator : public QGraphicsItemGroup
+{
+public:
+    LEDIndicator(bool on, QColor onColor, QColor offColor, QGraphicsItem *parent = nullptr)
+        : QGraphicsItemGroup(parent), m_on(on), m_onColor(onColor), m_offColor(offColor)
+    {
+        m_led = new QGraphicsEllipseItem(-6, -6, 12, 12, this);
+        m_led->setPen(QPen(Qt::darkGray, 1));
+        updateColor();
+    }
 
+    void setOn(bool on) {
+        m_on = on;
+        updateColor();
+    }
+
+    bool isOn() const { return m_on; }
+
+private:
+    void updateColor() {
+        m_led->setBrush(QBrush(m_on ? m_onColor : m_offColor));
+    }
+
+    bool m_on;
+    QColor m_onColor, m_offColor;
+    QGraphicsEllipseItem *m_led;
+};
+
+// ==================== ChamberItem - 改进的同心圆腔室 ====================
 ChamberItem::ChamberItem(const QString &name, QGraphicsItem *parent)
     : HardwareComponent(name, ComponentType::Chamber, parent)
 {
-    setFlags(QGraphicsItem::ItemIsSelectable);
+    setHandlesChildEvents(true);
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsSelectable);
+    setToolTip("Process Chamber - Click for details");
 }
 
 void ChamberItem::updateAppearance()
 {
-    QColor activeColor = (m_state == ComponentState::Running) ? C_LED_GREEN_DARK : C_WIN_DARK;
-
     for (auto child : childItems()) {
         if (child != m_nameText && child != m_valueText) {
             removeFromGroup(child);
@@ -80,61 +224,95 @@ void ChamberItem::updateAppearance()
         }
     }
 
-    // 最外圈
-    QGraphicsEllipseItem *outer = new QGraphicsEllipseItem(-50, -50, 100, 100, this);
+    bool running = (m_state == ComponentState::Running);
+
+    // 最外圈 - 深灰色带 3D 效果
+    QGraphicsEllipseItem *outer = new QGraphicsEllipseItem(-55, -55, 110, 110, this);
     outer->setBrush(QBrush(C_CHAMBER_OUTER));
-    outer->setPen(QPen(Qt::darkGray, 1));
+    outer->setPen(QPen(Qt::darkGray, 2));
     addToGroup(outer);
 
-    // 中圈
-    QGraphicsEllipseItem *middle = new QGraphicsEllipseItem(-40, -40, 80, 80, this);
-    middle->setBrush(QBrush(C_CHAMBER_INNER));
-    middle->setPen(Qt::NoPen);
-    addToGroup(middle);
+    // 外圈高光弧
+    QGraphicsPathItem *highlight = new QGraphicsPathItem(this);
+    QPainterPath path;
+    path.arcMoveTo(-55, -55, 110, 110, -135);
+    path.arcTo(-55, -55, 110, 110, -135, 90);
+    highlight->setPath(path);
+    highlight->setPen(QPen(QColor(180, 180, 180), 3));
+    highlight->setBrush(Qt::NoBrush);
+    addToGroup(highlight);
 
-    // 内圈
-    QGraphicsEllipseItem *inner = new QGraphicsEllipseItem(-30, -30, 60, 60, this);
-    inner->setBrush(QBrush(activeColor));
+    // 第二圈 - 中灰色
+    QGraphicsEllipseItem *ring2 = new QGraphicsEllipseItem(-45, -45, 90, 90, this);
+    ring2->setBrush(QBrush(C_CHAMBER_MID));
+    ring2->setPen(Qt::NoPen);
+    addToGroup(ring2);
+
+    // 第三圈 - 浅灰色
+    QGraphicsEllipseItem *ring3 = new QGraphicsEllipseItem(-35, -35, 70, 70, this);
+    ring3->setBrush(QBrush(C_CHAMBER_INNER));
+    ring3->setPen(Qt::NoPen);
+    addToGroup(ring3);
+
+    // 内圈 - 活动时绿色
+    QColor innerColor = running ? C_LED_GREEN_DARK : QColor(60, 60, 60);
+    QGraphicsEllipseItem *inner = new QGraphicsEllipseItem(-25, -25, 50, 50, this);
+    inner->setBrush(QBrush(innerColor));
     inner->setPen(Qt::NoPen);
     addToGroup(inner);
 
+    // 十字准星 - 代表视窗/ showerhead
+    QPen crossPen(running ? C_LED_GREEN : QColor(100, 100, 100), 2);
+    QGraphicsLineItem *hLine = new QGraphicsLineItem(-20, 0, 20, 0, this);
+    hLine->setPen(crossPen);
+    addToGroup(hLine);
+
+    QGraphicsLineItem *vLine = new QGraphicsLineItem(0, -20, 0, 20, this);
+    vLine->setPen(crossPen);
+    addToGroup(vLine);
+
     // 中心点
-    QGraphicsEllipseItem *center = new QGraphicsEllipseItem(-8, -8, 16, 16, this);
-    center->setBrush(QBrush(C_CHAMBER_CENTER));
+    QGraphicsEllipseItem *center = new QGraphicsEllipseItem(-5, -5, 10, 10, this);
+    center->setBrush(QBrush(running ? C_LED_GREEN : QColor(80, 80, 80)));
     center->setPen(Qt::NoPen);
     addToGroup(center);
 
-    // 十字准星 - 水平线
-    QGraphicsLineItem *hLine = new QGraphicsLineItem(-25, 0, 25, 0, this);
-    hLine->setPen(QPen(C_CHAMBER_INNER, 2));
-    addToGroup(hLine);
-
-    // 十字准星 - 垂直线
-    QGraphicsLineItem *vLine = new QGraphicsLineItem(0, -25, 0, 25, this);
-    vLine->setPen(QPen(C_CHAMBER_INNER, 2));
-    addToGroup(vLine);
+    // 外圈标签
+    if (!m_name.isEmpty()) {
+        QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem("1", this);
+        label->setFont(QFont("Arial", 10, QFont::Bold));
+        label->setBrush(QBrush(Qt::white));
+        label->setPos(-4, -6);
+    }
 }
 
-// ==================== ValveItem ====================
-// 阀门：领结形（两个对顶三角形）+ 矩形执行器
+void ChamberItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    qDebug() << "Chamber clicked!";
+    QGraphicsItemGroup::mousePressEvent(event);
+}
 
+// ==================== ValveItem - 改进的蝶形阀门 ====================
 ValveItem::ValveItem(const QString &name, QGraphicsItem *parent)
     : HardwareComponent(name, ComponentType::Valve, parent)
     , m_open(false)
 {
-    setFlags(QGraphicsItem::ItemIsSelectable);
+    setHandlesChildEvents(true);
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsSelectable);
+    setToolTip("Valve - Click to toggle");
 }
 
 void ValveItem::setOpen(bool open)
 {
-    m_open = open;
-    updateAppearance();
+    if (m_open != open) {
+        m_open = open;
+        updateAppearance();
+    }
 }
 
 void ValveItem::updateAppearance()
 {
-    QColor fillColor = m_open ? C_LED_GREEN_DARK : C_LED_RED_DARK;
-
     for (auto child : childItems()) {
         if (child != m_nameText && child != m_valueText) {
             removeFromGroup(child);
@@ -142,50 +320,72 @@ void ValveItem::updateAppearance()
         }
     }
 
-    // 上三角形
-    QPainterPath path;
-    path.moveTo(0, -15);
-    path.lineTo(12, 0);
-    path.lineTo(-12, 0);
-    path.closeSubpath();
+    // 阀门颜色：绿色=开，红色=关
+    QColor valveColor = m_open ? C_LED_GREEN_DARK : C_LED_RED_DARK;
+    QColor actuatorColor = m_open ? C_LED_GREEN : C_LED_RED;
 
-    QGraphicsPathItem *topTri = new QGraphicsPathItem(path, this);
-    topTri->setBrush(QBrush(fillColor));
-    topTri->setPen(QPen(Qt::darkGray, 1));
-    addToGroup(topTri);
-
-    // 下三角形
-    QPainterPath path2;
-    path2.moveTo(0, 15);
-    path2.lineTo(12, 0);
-    path2.lineTo(-12, 0);
-    path2.closeSubpath();
-
-    QGraphicsPathItem *bottomTri = new QGraphicsPathItem(path2, this);
-    bottomTri->setBrush(QBrush(fillColor));
-    bottomTri->setPen(QPen(Qt::darkGray, 1));
-    addToGroup(bottomTri);
-
-    // 执行器（矩形）
-    QGraphicsRectItem *actuator = new QGraphicsRectItem(-6, -20, 12, 6, this);
-    actuator->setBrush(QBrush(C_WIN_DARK));
+    // 执行器 - 顶部矩形
+    QGraphicsRectItem *actuator = new QGraphicsRectItem(-8, -25, 16, 8, this);
+    actuator->setBrush(QBrush(actuatorColor));
     actuator->setPen(QPen(Qt::darkGray, 1));
     addToGroup(actuator);
+
+    // 执行器连接线
+    QGraphicsLineItem *connector = new QGraphicsLineItem(0, -17, 0, -10, this);
+    connector->setPen(QPen(Qt::darkGray, 2));
+    addToGroup(connector);
+
+    // 上三角形 (蝶形阀门上半部分)
+    QPainterPath topPath;
+    topPath.moveTo(0, -10);      // 顶点
+    topPath.lineTo(15, 0);       // 右下
+    topPath.lineTo(-15, 0);      // 左下
+    topPath.closeSubpath();
+
+    QGraphicsPathItem *topTri = new QGraphicsPathItem(topPath, this);
+    topTri->setBrush(QBrush(valveColor));
+    topTri->setPen(QPen(Qt::black, 1.5));
+    addToGroup(topTri);
+
+    // 下三角形 (蝶形阀门下半部分)
+    QPainterPath bottomPath;
+    bottomPath.moveTo(0, 15);    // 顶点
+    bottomPath.lineTo(15, 0);    // 右上
+    bottomPath.lineTo(-15, 0);   // 左上
+    bottomPath.closeSubpath();
+
+    QGraphicsPathItem *bottomTri = new QGraphicsPathItem(bottomPath, this);
+    bottomTri->setBrush(QBrush(valveColor));
+    bottomTri->setPen(QPen(Qt::black, 1.5));
+    addToGroup(bottomTri);
+
+    // 中间轴
+    QGraphicsEllipseItem *pivot = new QGraphicsEllipseItem(-3, -3, 6, 6, this);
+    pivot->setBrush(QBrush(Qt::darkGray));
+    pivot->setPen(Qt::NoPen);
+    addToGroup(pivot);
 }
 
-// ==================== PumpItem ====================
-// 泵：复杂几何体，矩形基座+圆柱形顶部
+void ValveItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    // 点击阀门切换状态
+    setOpen(!m_open);
+    qDebug() << "Valve" << m_name << "toggled to" << (m_open ? "OPEN" : "CLOSED");
+    QGraphicsItemGroup::mousePressEvent(event);
+}
 
+// ==================== PumpItem - 改进的泵 ====================
 PumpItem::PumpItem(const QString &name, QGraphicsItem *parent)
     : HardwareComponent(name, ComponentType::Pump, parent)
 {
-    setFlags(QGraphicsItem::ItemIsSelectable);
+    setHandlesChildEvents(true);
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsSelectable);
+    setToolTip("Pump - Click for details");
 }
 
 void PumpItem::updateAppearance()
 {
-    QColor activeColor = (m_state == ComponentState::Running) ? C_LED_GREEN_DARK : C_WIN_DARK;
-
     for (auto child : childItems()) {
         if (child != m_nameText && child != m_valueText) {
             removeFromGroup(child);
@@ -193,44 +393,66 @@ void PumpItem::updateAppearance()
         }
     }
 
-    // 泵体（矩形）
-    QGraphicsRectItem *body = new QGraphicsRectItem(-25, -15, 50, 35, this);
-    body->setBrush(QBrush(activeColor));
+    bool running = (m_state == ComponentState::Running);
+
+    // 泵体 - 矩形主体
+    QColor bodyColor = running ? C_LED_GREEN_DARK : C_WIN_DARK;
+    QGraphicsRectItem *body = new QGraphicsRectItem(-30, -10, 60, 35, this);
+    body->setBrush(QBrush(bodyColor));
     body->setPen(QPen(Qt::darkGray, 1));
     addToGroup(body);
 
-    // 泵顶（较小矩形）
-    QGraphicsRectItem *top = new QGraphicsRectItem(-18, -25, 36, 12, this);
+    // 泵顶 - 圆柱形效果
+    QGraphicsRectItem *top = new QGraphicsRectItem(-22, -20, 44, 12, this);
     top->setBrush(QBrush(C_WIN_MEDIUM));
     top->setPen(QPen(Qt::darkGray, 1));
     addToGroup(top);
 
-    // 泵底座（梯形效果）
-    QGraphicsRectItem *base = new QGraphicsRectItem(-28, 18, 56, 8, this);
+    // 圆柱顶面
+    QGraphicsEllipseItem *topCap = new QGraphicsEllipseItem(-22, -25, 44, 10, this);
+    topCap->setBrush(QBrush(C_WIN_LIGHT));
+    topCap->setPen(QPen(Qt::darkGray, 1));
+    addToGroup(topCap);
+
+    // 泵底座
+    QGraphicsRectItem *base = new QGraphicsRectItem(-35, 23, 70, 6, this);
     base->setBrush(QBrush(C_WIN_DARK));
-    base->setPen(QPen(Qt::darkGray, 1));
+    base->setPen(Qt::NoPen);
     addToGroup(base);
 
-    // P 符号
-    QGraphicsTextItem *pLabel = new QGraphicsTextItem("P", this);
-    pLabel->setDefaultTextColor(Qt::white);
-    pLabel->setFont(QFont("Arial", 12, QFont::Bold));
-    pLabel->setPos(-5, -8);
+    // P 标记
+    QGraphicsSimpleTextItem *pLabel = new QGraphicsSimpleTextItem("P", this);
+    pLabel->setFont(QFont("Arial", 14, QFont::Bold));
+    pLabel->setBrush(QBrush(Qt::white));
+    pLabel->setPos(-6, -5);
     addToGroup(pLabel);
+
+    // 冷却鳍片
+    for (int i = 0; i < 4; i++) {
+        QGraphicsRectItem *fin = new QGraphicsRectItem(-30 + i*16, 5, 8, 15, this);
+        fin->setBrush(QBrush(C_WIN_MEDIUM));
+        fin->setPen(Qt::NoPen);
+        addToGroup(fin);
+    }
+}
+
+void PumpItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    qDebug() << "Pump" << m_name << "clicked!";
+    QGraphicsItemGroup::mousePressEvent(event);
 }
 
 // ==================== RFGeneratorItem ====================
-
 RFGeneratorItem::RFGeneratorItem(const QString &name, QGraphicsItem *parent)
     : HardwareComponent(name, ComponentType::RFGenerator, parent)
 {
-    setFlags(QGraphicsItem::ItemIsSelectable);
+    setHandlesChildEvents(true);
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsSelectable);
 }
 
 void RFGeneratorItem::updateAppearance()
 {
-    QColor fillColor = (m_state == ComponentState::Running) ? C_LED_GREEN_DARK : C_WIN_DARK;
-
     for (auto child : childItems()) {
         if (child != m_nameText && child != m_valueText) {
             removeFromGroup(child);
@@ -238,38 +460,46 @@ void RFGeneratorItem::updateAppearance()
         }
     }
 
-    // 矩形主体
-    QGraphicsRectItem *rf = new QGraphicsRectItem(-30, -20, 60, 40, this);
+    bool active = (m_state == ComponentState::Running);
+    QColor fillColor = active ? C_LED_GREEN_DARK : C_WIN_DARK;
+
+    // 主体矩形
+    QGraphicsRectItem *rf = new QGraphicsRectItem(-35, -25, 70, 50, this);
     rf->setBrush(QBrush(fillColor));
     rf->setPen(QPen(Qt::darkGray, 1));
     addToGroup(rf);
 
-    // 频率文字
-    QGraphicsTextItem *freq = new QGraphicsTextItem("13.56", this);
-    freq->setDefaultTextColor(Qt::white);
-    freq->setFont(QFont("Arial", 8));
-    freq->setPos(-20, -5);
+    // 频率标签
+    QGraphicsSimpleTextItem *freq = new QGraphicsSimpleTextItem("13.56", this);
+    freq->setFont(QFont("Arial", 11, QFont::Bold));
+    freq->setBrush(QBrush(Qt::white));
+    freq->setPos(-22, -18);
     addToGroup(freq);
 
-    QGraphicsTextItem *mhz = new QGraphicsTextItem("MHz", this);
-    mhz->setDefaultTextColor(Qt::white);
-    mhz->setFont(QFont("Arial", 6));
-    mhz->setPos(-12, 8);
+    QGraphicsSimpleTextItem *mhz = new QGraphicsSimpleTextItem("MHz", this);
+    mhz->setFont(QFont("Arial", 7));
+    mhz->setBrush(QBrush(Qt::white));
+    mhz->setPos(-15, 0);
     addToGroup(mhz);
+
+    QGraphicsSimpleTextItem *rfLabel = new QGraphicsSimpleTextItem("RF", this);
+    rfLabel->setFont(QFont("Arial", 8));
+    rfLabel->setBrush(QBrush(QColor(180, 180, 180)));
+    rfLabel->setPos(-8, 15);
+    addToGroup(rfLabel);
 }
 
 // ==================== ICPGeneratorItem ====================
-
 ICPGeneratorItem::ICPGeneratorItem(const QString &name, QGraphicsItem *parent)
     : HardwareComponent(name, ComponentType::ICPGenerator, parent)
 {
-    setFlags(QGraphicsItem::ItemIsSelectable);
+    setHandlesChildEvents(true);
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsSelectable);
 }
 
 void ICPGeneratorItem::updateAppearance()
 {
-    QColor fillColor = (m_state == ComponentState::Running) ? C_LED_GREEN_DARK : C_WIN_DARK;
-
     for (auto child : childItems()) {
         if (child != m_nameText && child != m_valueText) {
             removeFromGroup(child);
@@ -277,39 +507,47 @@ void ICPGeneratorItem::updateAppearance()
         }
     }
 
-    // 矩形主体
-    QGraphicsRectItem *icp = new QGraphicsRectItem(-30, -20, 60, 40, this);
+    bool active = (m_state == ComponentState::Running);
+    QColor fillColor = active ? C_LED_GREEN_DARK : C_WIN_DARK;
+
+    // 主体 - 更大一些
+    QGraphicsRectItem *icp = new QGraphicsRectItem(-40, -30, 80, 60, this);
     icp->setBrush(QBrush(fillColor));
     icp->setPen(QPen(Qt::darkGray, 1));
     addToGroup(icp);
 
-    // 频率文字
-    QGraphicsTextItem *freq = new QGraphicsTextItem("2", this);
-    freq->setDefaultTextColor(Qt::white);
-    freq->setFont(QFont("Arial", 14, QFont::Bold));
-    freq->setPos(-5, -10);
+    // 频率
+    QGraphicsSimpleTextItem *freq = new QGraphicsSimpleTextItem("2", this);
+    freq->setFont(QFont("Arial", 18, QFont::Bold));
+    freq->setBrush(QBrush(Qt::white));
+    freq->setPos(-8, -22);
     addToGroup(freq);
 
-    QGraphicsTextItem *mhz = new QGraphicsTextItem("MHz", this);
-    mhz->setDefaultTextColor(Qt::white);
-    mhz->setFont(QFont("Arial", 6));
-    mhz->setPos(-12, 8);
+    QGraphicsSimpleTextItem *mhz = new QGraphicsSimpleTextItem("MHz", this);
+    mhz->setFont(QFont("Arial", 8));
+    mhz->setBrush(QBrush(Qt::white));
+    mhz->setPos(-15, 2);
     addToGroup(mhz);
+
+    QGraphicsSimpleTextItem *icpLabel = new QGraphicsSimpleTextItem("ICP", this);
+    icpLabel->setFont(QFont("Arial", 9));
+    icpLabel->setBrush(QBrush(QColor(180, 180, 180)));
+    icpLabel->setPos(-12, 20);
+    addToGroup(icpLabel);
 }
 
 // ==================== GasMFCItem ====================
-
 GasMFCItem::GasMFCItem(const QString &name, int channel, QGraphicsItem *parent)
     : HardwareComponent(name, ComponentType::GasMFC, parent)
     , m_channel(channel)
 {
-    setFlags(QGraphicsItem::ItemIsSelectable);
+    setHandlesChildEvents(true);
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsSelectable);
 }
 
 void GasMFCItem::updateAppearance()
 {
-    QColor fillColor = (m_state == ComponentState::Running) ? C_LED_GREEN_DARK : C_WIN_DARK;
-
     for (auto child : childItems()) {
         if (child != m_nameText && child != m_valueText) {
             removeFromGroup(child);
@@ -317,33 +555,49 @@ void GasMFCItem::updateAppearance()
         }
     }
 
+    bool active = (m_state == ComponentState::Running);
+    QColor fillColor = active ? C_LED_GREEN_DARK : C_WIN_DARK;
+
     // MFC 主体
-    QGraphicsRectItem *mfc = new QGraphicsRectItem(-22, -18, 44, 36, this);
+    QGraphicsRectItem *mfc = new QGraphicsRectItem(-25, -20, 50, 40, this);
     mfc->setBrush(QBrush(fillColor));
     mfc->setPen(QPen(Qt::darkGray, 1));
     addToGroup(mfc);
 
     // 通道号
     QString chStr = QString("CH%1").arg(m_channel);
-    QGraphicsTextItem *chLabel = new QGraphicsTextItem(chStr, this);
-    chLabel->setDefaultTextColor(Qt::white);
-    chLabel->setFont(QFont("Arial", 9, QFont::Bold));
-    chLabel->setPos(-14, -5);
-    addToGroup(chLabel);
+    QGraphicsSimpleTextItem *ch = new QGraphicsSimpleTextItem(chStr, this);
+    ch->setFont(QFont("Arial", 10, QFont::Bold));
+    ch->setBrush(QBrush(Qt::white));
+    ch->setPos(-15, -15);
+    addToGroup(ch);
+
+    // 气体名称
+    QGraphicsSimpleTextItem *gas = new QGraphicsSimpleTextItem(m_name, this);
+    gas->setFont(QFont("Arial", 8));
+    gas->setBrush(QBrush(QColor(180, 180, 180)));
+    gas->setPos(-12, 0);
+    addToGroup(gas);
+
+    // 数值
+    QGraphicsSimpleTextItem *val = new QGraphicsSimpleTextItem(m_value.isEmpty() ? "0" : m_value, this);
+    val->setFont(QFont("Courier New", 9));
+    val->setBrush(QBrush(Qt::white));
+    val->setPos(-15, 12);
+    addToGroup(val);
 }
 
 // ==================== PressureGaugeItem ====================
-
 PressureGaugeItem::PressureGaugeItem(const QString &name, QGraphicsItem *parent)
     : HardwareComponent(name, ComponentType::PressureGauge, parent)
 {
-    setFlags(QGraphicsItem::ItemIsSelectable);
+    setHandlesChildEvents(true);
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsSelectable);
 }
 
 void PressureGaugeItem::updateAppearance()
 {
-    QColor fillColor = (m_state == ComponentState::Running) ? C_LED_GREEN_DARK : C_WIN_DARK;
-
     for (auto child : childItems()) {
         if (child != m_nameText && child != m_valueText) {
             removeFromGroup(child);
@@ -351,32 +605,52 @@ void PressureGaugeItem::updateAppearance()
         }
     }
 
-    // 圆形表盘
-    QGraphicsEllipseItem *gauge = new QGraphicsEllipseItem(-22, -22, 44, 44, this);
-    gauge->setBrush(QBrush(fillColor));
+    // 压力计外壳
+    QGraphicsRectItem *gauge = new QGraphicsRectItem(-30, -25, 60, 50, this);
+    gauge->setBrush(QBrush(C_WIN_GRAY));
     gauge->setPen(QPen(Qt::darkGray, 1));
     addToGroup(gauge);
 
-    // P 符号
-    QGraphicsTextItem *pLabel = new QGraphicsTextItem("P", this);
-    pLabel->setDefaultTextColor(Qt::white);
-    pLabel->setFont(QFont("Arial", 14, QFont::Bold));
-    pLabel->setPos(-5, -10);
-    addToGroup(pLabel);
+    // 显示屏
+    QGraphicsRectItem *display = new QGraphicsRectItem(-25, -20, 50, 20, this);
+    display->setBrush(QBrush(Qt::black));
+    display->setPen(Qt::NoPen);
+    addToGroup(display);
+
+    // 压力值
+    QString valStr = m_value.isEmpty() ? "0.00" : m_value;
+    QGraphicsSimpleTextItem *val = new QGraphicsSimpleTextItem(valStr, this);
+    val->setFont(QFont("Courier New", 10, QFont::Bold));
+    val->setBrush(QBrush(C_LED_GREEN));
+    val->setPos(-22, -17);
+    addToGroup(val);
+
+    // 单位
+    QGraphicsSimpleTextItem *unit = new QGraphicsSimpleTextItem("mbar", this);
+    unit->setFont(QFont("Arial", 7));
+    unit->setBrush(QBrush(QColor(180, 180, 180)));
+    unit->setPos(-12, 0);
+    addToGroup(unit);
+
+    // Pirani 标签
+    QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem("Pirani", this);
+    label->setFont(QFont("Arial", 8));
+    label->setBrush(QBrush(Qt::black));
+    label->setPos(-18, 25);
+    addToGroup(label);
 }
 
 // ==================== ChuckItem ====================
-
 ChuckItem::ChuckItem(const QString &name, QGraphicsItem *parent)
     : HardwareComponent(name, ComponentType::Chuck, parent)
 {
-    setFlags(QGraphicsItem::ItemIsSelectable);
+    setHandlesChildEvents(true);
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsSelectable);
 }
 
 void ChuckItem::updateAppearance()
 {
-    QColor fillColor = (m_state == ComponentState::Running) ? C_LED_GREEN_DARK : C_WIN_DARK;
-
     for (auto child : childItems()) {
         if (child != m_nameText && child != m_valueText) {
             removeFromGroup(child);
@@ -384,27 +658,46 @@ void ChuckItem::updateAppearance()
         }
     }
 
-    // Chuck 矩形
-    QGraphicsRectItem *chuck = new QGraphicsRectItem(-35, -12, 70, 24, this);
+    bool active = (m_state == ComponentState::Running);
+    QColor fillColor = active ? C_LED_GREEN_DARK : C_WIN_DARK;
+
+    // Chuck 主体
+    QGraphicsRectItem *chuck = new QGraphicsRectItem(-40, -15, 80, 30, this);
     chuck->setBrush(QBrush(fillColor));
     chuck->setPen(QPen(Qt::darkGray, 1));
     addToGroup(chuck);
 
-    // 温度符号
-    QGraphicsTextItem *tLabel = new QGraphicsTextItem("°C", this);
-    tLabel->setDefaultTextColor(Qt::white);
-    tLabel->setFont(QFont("Arial", 7));
-    tLabel->setPos(-10, -3);
-    addToGroup(tLabel);
+    // 温度显示
+    QString tempStr = m_value.isEmpty() ? "25" : m_value;
+    QGraphicsSimpleTextItem *temp = new QGraphicsSimpleTextItem(tempStr, this);
+    temp->setFont(QFont("Courier New", 14, QFont::Bold));
+    temp->setBrush(QBrush(Qt::white));
+    temp->setPos(-18, -10);
+    addToGroup(temp);
+
+    // 单位
+    QGraphicsSimpleTextItem *unit = new QGraphicsSimpleTextItem("C", this);
+    unit->setFont(QFont("Arial", 10));
+    unit->setBrush(QBrush(Qt::white));
+    unit->setPos(12, -8);
+    addToGroup(unit);
+
+    // 标签
+    QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem("Chuck", this);
+    label->setFont(QFont("Arial", 8));
+    label->setBrush(QBrush(QColor(180, 180, 180)));
+    label->setPos(-20, 15);
+    addToGroup(label);
 }
 
 // ==================== PipeItem ====================
-
 PipeItem::PipeItem(const QString &name, QGraphicsItem *parent)
     : HardwareComponent(name, ComponentType::Pipe, parent)
     , m_flowing(false)
 {
-    setFlags(QGraphicsItem::ItemIsSelectable);
+    setHandlesChildEvents(true);
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsSelectable);
 }
 
 void PipeItem::setFlowDirection(bool flowing)
@@ -422,125 +715,14 @@ void PipeItem::updateAppearance()
         }
     }
 
-    QColor pipeColor = m_flowing ? C_PIPE_ACTIVE : C_PIPE_INACTIVE;
+    QColor pipeColor = m_flowing ? C_LED_GREEN : C_PIPE_BLACK;
+    QPen pipePen(pipeColor, 4);
 
-    QGraphicsLineItem *pipe = new QGraphicsLineItem(-30, 0, 30, 0, this);
-    pipe->setPen(QPen(pipeColor, 5));
-    addToGroup(pipe);
+    // 管道线 - 需要外部设置端点
+    // 这里只是一个占位符，实际管道在 setupLayout 中绘制
 }
 
-// ==================== BellowsItem ====================
-// 波纹管：垂直线条表示
-
-class BellowsItem : public QGraphicsItemGroup
-{
-public:
-    BellowsItem(QGraphicsItem *parent = nullptr) : QGraphicsItemGroup(parent)
-    {
-        // 绘制波纹效果
-        for (int i = 0; i < 6; i++) {
-            QGraphicsLineItem *line = new QGraphicsLineItem(-2, i * 4, 2, i * 4, this);
-            line->setPen(QPen(C_BELLOW, 2));
-            addToGroup(line);
-        }
-    }
-};
-
-// ==================== LEDIndicator ====================
-
-class LEDIndicator : public QGraphicsItemGroup
-{
-public:
-    LEDIndicator(bool on, const QColor &onColor, const QColor &offColor, QGraphicsItem *parent = nullptr)
-        : QGraphicsItemGroup(parent), m_on(on), m_onColor(onColor), m_offColor(offColor)
-    {
-        updateAppearance();
-    }
-
-    void setOn(bool on) {
-        m_on = on;
-        updateAppearance();
-    }
-
-private:
-    void updateAppearance() {
-        for (auto child : childItems()) {
-            removeFromGroup(child);
-            delete child;
-        }
-
-        QColor color = m_on ? m_onColor : m_offColor;
-
-        // LED 方块
-        QGraphicsRectItem *led = new QGraphicsRectItem(-5, -5, 10, 10, this);
-        led->setBrush(QBrush(color));
-        led->setPen(QPen(Qt::darkGray, 1));
-        addToGroup(led);
-    }
-
-    bool m_on;
-    QColor m_onColor;
-    QColor m_offColor;
-};
-
-// ==================== Button3D ====================
-// 3D 效果按钮
-
-class Button3D : public QGraphicsItemGroup
-{
-public:
-    Button3D(const QString &text, const QColor &bgColor, QGraphicsItem *parent = nullptr)
-        : QGraphicsItemGroup(parent), m_text(text), m_bgColor(bgColor)
-    {
-        updateAppearance();
-    }
-
-private:
-    void updateAppearance() {
-        for (auto child : childItems()) {
-            removeFromGroup(child);
-            delete child;
-        }
-
-        // 按钮主体（凹陷效果）
-        QGraphicsRectItem *btn = new QGraphicsRectItem(0, 0, 80, 24, this);
-        btn->setBrush(QBrush(m_bgColor));
-        btn->setPen(QPen(Qt::darkGray, 1));
-        addToGroup(btn);
-
-        // 3D 效果 - 顶部高光
-        QGraphicsLineItem *topLine = new QGraphicsLineItem(1, 1, 78, 1, this);
-        topLine->setPen(QPen(Qt::white, 1));
-        addToGroup(topLine);
-
-        // 3D 效果 - 左侧高光
-        QGraphicsLineItem *leftLine = new QGraphicsLineItem(1, 1, 1, 22, this);
-        leftLine->setPen(QPen(Qt::white, 1));
-        addToGroup(leftLine);
-
-        // 3D 效果 - 底部阴影
-        QGraphicsLineItem *bottomLine = new QGraphicsLineItem(1, 23, 78, 23, this);
-        bottomLine->setPen(QPen(Qt::darkGray, 1));
-        addToGroup(bottomLine);
-
-        // 3D 效果 - 右侧阴影
-        QGraphicsLineItem *rightLine = new QGraphicsLineItem(79, 1, 79, 23, this);
-        rightLine->setPen(QPen(Qt::darkGray, 1));
-        addToGroup(rightLine);
-
-        // 文字
-        QGraphicsTextItem *label = new QGraphicsTextItem(m_text, this);
-        label->setDefaultTextColor(Qt::black);
-        label->setFont(QFont("Arial", 9));
-        label->setPos(10, 5);
-        addToGroup(label);
-    }
-
-    QString m_text;
-    QColor m_bgColor;
-};
-
-// ==================== HardwareDiagram ====================
+// ==================== HardwareDiagram 主类 ====================
 
 HardwareDiagram::HardwareDiagram(QWidget *parent)
     : QGraphicsView(parent)
@@ -548,10 +730,9 @@ HardwareDiagram::HardwareDiagram(QWidget *parent)
     m_scene = new QGraphicsScene(this);
     setScene(m_scene);
     setRenderHint(QPainter::Antialiasing);
-    // Windows Classic 风格背景
     setBackgroundBrush(QBrush(C_WIN_GRAY));
 
-    m_scene->setSceneRect(0, 0, 1000, 720);
+    m_scene->setSceneRect(0, 0, 1100, 750);
     setupLayout();
 }
 
@@ -566,494 +747,553 @@ void HardwareDiagram::setupLayout()
 
     // ==================== 顶部菜单栏 ====================
     // 菜单栏背景
-    QGraphicsRectItem *menuBar = new QGraphicsRectItem(0, 0, 1000, 45);
-    menuBar->setBrush(QBrush(C_WIN_LIGHT));
+    QGraphicsRectItem *menuBar = new QGraphicsRectItem(0, 0, 1100, 45);
+    menuBar->setBrush(QBrush(C_WIN_GRAY));
     menuBar->setPen(QPen(Qt::darkGray, 1));
+    menuBar->setZValue(0);
     m_scene->addItem(menuBar);
 
     // System 按钮
-    Button3D *systemBtn = new Button3D("System", C_WIN_LIGHT);
-    systemBtn->setPos(5, 10);
+    InteractiveButton *systemBtn = new InteractiveButton("System");
+    systemBtn->setPos(10, 12);
+    systemBtn->setZValue(10);
     m_scene->addItem(systemBtn);
 
     // Process 按钮
-    Button3D *processBtn = new Button3D("Process", C_WIN_LIGHT);
-    processBtn->setPos(90, 10);
+    InteractiveButton *processBtn = new InteractiveButton("Process");
+    processBtn->setPos(100, 12);
+    processBtn->setZValue(10);
     m_scene->addItem(processBtn);
 
     // Manager 按钮
-    Button3D *managerBtn = new Button3D("Manager", C_WIN_LIGHT);
-    managerBtn->setPos(175, 10);
+    InteractiveButton *managerBtn = new InteractiveButton("Manager");
+    managerBtn->setPos(190, 12);
+    managerBtn->setZValue(10);
     m_scene->addItem(managerBtn);
 
-    // 状态 LED
-    LEDIndicator *sysLed = new LEDIndicator(true, C_LED_BLUE, C_WIN_DARK);
-    sysLed->setPos(260, 17);
-    m_scene->addItem(sysLed);
-
-    // PUMP CONTROL
-    QGraphicsTextItem *pumpLabel = new QGraphicsTextItem("PUMP CONTROL");
+    // PUMP CONTROL 标签
+    QGraphicsSimpleTextItem *pumpLabel = new QGraphicsSimpleTextItem("PUMP CONTROL");
     pumpLabel->setFont(QFont("Arial", 9));
-    pumpLabel->setDefaultTextColor(Qt::black);
-    pumpLabel->setPos(280, 18);
+    pumpLabel->setBrush(QBrush(Qt::black));
+    pumpLabel->setPos(280, 16);
+    pumpLabel->setZValue(10);
     m_scene->addItem(pumpLabel);
 
     // 右侧 RED ALERT 按钮
-    QGraphicsRectItem *alertBar = new QGraphicsRectItem(800, 5, 195, 35);
+    QGraphicsRectItem *alertBar = new QGraphicsRectItem(850, 5, 240, 35);
     alertBar->setBrush(QBrush(C_LED_RED));
     alertBar->setPen(QPen(Qt::darkGray, 1));
+    alertBar->setZValue(10);
     m_scene->addItem(alertBar);
 
-    QGraphicsTextItem *alertText = new QGraphicsTextItem("RED ALERT");
-    alertText->setFont(QFont("Arial", 12, QFont::Bold));
-    alertText->setDefaultTextColor(Qt::white);
-    alertText->setPos(855, 15);
+    QGraphicsSimpleTextItem *alertText = new QGraphicsSimpleTextItem("RED ALERT");
+    alertText->setFont(QFont("Arial", 14, QFont::Bold));
+    alertText->setBrush(QBrush(Qt::white));
+    alertText->setPos(920, 13);
+    alertText->setZValue(11);
     m_scene->addItem(alertText);
 
     // STOP ALL AUTO PROCESSES 按钮
-    QGraphicsRectItem *stopBtn = new QGraphicsRectItem(700, 8, 95, 28);
+    QGraphicsRectItem *stopBtn = new QGraphicsRectItem(700, 8, 140, 30);
     stopBtn->setBrush(QBrush(C_LED_GREEN));
     stopBtn->setPen(QPen(Qt::darkGray, 1));
+    stopBtn->setZValue(10);
     m_scene->addItem(stopBtn);
 
-    // 按钮 3D 效果
-    QGraphicsLineItem *stopTop = new QGraphicsLineItem(701, 9, 794, 9, m_scene->itemAt(700, 8, QTransform()) ? nullptr : nullptr);
-    stopTop->setPen(QPen(Qt::white, 1));
-    m_scene->addItem(stopTop);
-
-    QGraphicsTextItem *stopText = new QGraphicsTextItem("STOP ALL");
+    QGraphicsSimpleTextItem *stopText = new QGraphicsSimpleTextItem("STOP ALL AUTO PROCESSES");
     stopText->setFont(QFont("Arial", 9, QFont::Bold));
-    stopText->setDefaultTextColor(Qt::white);
+    stopText->setBrush(QBrush(Qt::white));
     stopText->setPos(712, 18);
+    stopText->setZValue(11);
     m_scene->addItem(stopText);
 
     // ==================== 状态栏 ====================
-    QGraphicsRectItem *statusBar = new QGraphicsRectItem(0, 45, 1000, 25);
+    QGraphicsRectItem *statusBar = new QGraphicsRectItem(0, 45, 1100, 28);
     statusBar->setBrush(QBrush(C_WIN_LIGHT));
     statusBar->setPen(QPen(Qt::darkGray, 1));
+    statusBar->setZValue(0);
     m_scene->addItem(statusBar);
 
-    QGraphicsTextItem *robotStatus = new QGraphicsTextItem("Robot arm standing by");
+    QGraphicsSimpleTextItem *robotStatus = new QGraphicsSimpleTextItem("Robot arm standing by");
     robotStatus->setFont(QFont("Arial", 9));
-    robotStatus->setDefaultTextColor(Qt::black);
-    robotStatus->setPos(10, 52);
+    robotStatus->setBrush(QBrush(Qt::black));
+    robotStatus->setPos(10, 54);
+    robotStatus->setZValue(10);
     m_scene->addItem(robotStatus);
 
-    // ==================== 主工作区背景 ====================
-    QGraphicsRectItem *workArea = new QGraphicsRectItem(0, 70, 1000, 450);
-    workArea->setBrush(QBrush(C_WIN_GRAY));
-    workArea->setPen(QPen(Qt::darkGray, 1));
-    m_scene->addItem(workArea);
+    // ==================== Mimic 区域背景 ====================
+    QGraphicsRectItem *mimicBg = new QGraphicsRectItem(0, 73, 800, 480);
+    mimicBg->setBrush(QBrush(C_MIMIC_BG));
+    mimicBg->setPen(QPen(Qt::darkGray, 1));
+    mimicBg->setZValue(0);
+    m_scene->addItem(mimicBg);
 
-    // ==================== 硬件组件布局 ====================
+    // ==================== 绘制管道（黑色单线）====================
+    QPen pipePen(C_PIPE_BLACK, 4);
 
-    // 中心腔室
-    ChamberItem *chamber = new ChamberItem("Chamber");
+    // 主管道 - 腔室到泵（垂直向下）
+    addPipeLine(550, 330, 550, 420, pipePen);
+    addPipeLine(550, 420, 200, 420, pipePen);
+    addPipeLine(200, 420, 200, 450, pipePen);
+
+    // 腔室到 RF 发生器（左侧）
+    addPipeLine(500, 280, 350, 280, pipePen);
+
+    // 腔室到 ICP 发生器（上方）
+    addPipeLine(550, 230, 550, 180, pipePen);
+
+    // 压力计连接（右侧）
+    addPipeLine(600, 280, 750, 280, pipePen);
+
+    // 气体管道（左侧进入）
+    addPipeLine(100, 250, 100, 350, pipePen);
+    addPipeLine(100, 350, 500, 350, pipePen);
+    addPipeLine(500, 350, 500, 300, pipePen);
+
+    // 分子泵连接（右下）
+    addPipeLine(600, 330, 700, 330, pipePen);
+    addPipeLine(700, 330, 700, 420, pipePen);
+    addPipeLine(700, 420, 850, 420, pipePen);
+
+    // ==================== 组件布局 ====================
+
+    // 中心腔室 - 更大更准确
+    ChamberItem *chamber = new ChamberItem("Process Chamber");
     chamber->setPos(550, 280);
     chamber->setState(ComponentState::Normal);
+    chamber->setZValue(5);
     m_scene->addItem(chamber);
     m_components["Chamber"] = chamber;
 
     // RF 发生器 (左侧)
-    RFGeneratorItem *rf = new RFGeneratorItem("RF");
-    rf->setPos(280, 280);
+    RFGeneratorItem *rf = new RFGeneratorItem("RF Generator");
+    rf->setPos(320, 280);
     rf->setState(ComponentState::Normal);
+    rf->setZValue(5);
     m_scene->addItem(rf);
     m_components["RF"] = rf;
 
     // ICP 发生器 (上方)
-    ICPGeneratorItem *icp = new ICPGeneratorItem("ICP");
-    icp->setPos(550, 100);
+    ICPGeneratorItem *icp = new ICPGeneratorItem("ICP Source");
+    icp->setPos(550, 150);
     icp->setState(ComponentState::Normal);
+    icp->setZValue(5);
     m_scene->addItem(icp);
     m_components["ICP"] = icp;
 
     // 压力计 (右侧)
     PressureGaugeItem *pressure = new PressureGaugeItem("Pressure");
-    pressure->setPos(800, 280);
+    pressure->setPos(780, 280);
     pressure->setState(ComponentState::Normal);
+    pressure->setZValue(5);
     m_scene->addItem(pressure);
     m_components["Pressure"] = pressure;
 
     // 机械泵 (左下)
     PumpItem *mp = new PumpItem("MP");
-    mp->setPos(180, 450);
+    mp->setPos(200, 470);
     mp->setState(ComponentState::Normal);
+    mp->setZValue(5);
     m_scene->addItem(mp);
     m_components["MP"] = mp;
 
     // 分子泵 (右下)
     PumpItem *tp = new PumpItem("TP");
-    tp->setPos(820, 450);
+    tp->setPos(850, 470);
     tp->setState(ComponentState::Normal);
+    tp->setZValue(5);
     m_scene->addItem(tp);
     m_components["TP"] = tp;
 
-    // Chuck (下方)
+    // Chuck/加热台 (下方腔室下面)
     ChuckItem *chuck = new ChuckItem("Chuck");
-    chuck->setPos(550, 480);
+    chuck->setPos(550, 400);
     chuck->setState(ComponentState::Normal);
+    chuck->setZValue(5);
     m_scene->addItem(chuck);
     m_components["Chuck"] = chuck;
 
-    // 气体 MFC (左侧)
-    GasMFCItem *mfc1 = new GasMFCItem("MFC1", 1);
-    mfc1->setPos(80, 140);
-    mfc1->setState(ComponentState::Normal);
-    m_scene->addItem(mfc1);
-    m_components["MFC1"] = mfc1;
+    // 气体 MFC - 4路
+    QStringList gases = {"Ar", "O2", "N2", "CF4"};
+    for (int i = 0; i < 4; i++) {
+        GasMFCItem *mfc = new GasMFCItem(gases[i], i+1);
+        mfc->setPos(70, 200 + i * 50);
+        mfc->setState(ComponentState::Normal);
+        mfc->setZValue(5);
+        m_scene->addItem(mfc);
+        m_components[gases[i]] = mfc;
+    }
 
-    GasMFCItem *mfc2 = new GasMFCItem("MFC2", 2);
-    mfc2->setPos(80, 200);
-    mfc2->setState(ComponentState::Normal);
-    m_scene->addItem(mfc2);
-    m_components["MFC2"] = mfc2;
-
-    GasMFCItem *mfc3 = new GasMFCItem("MFC3", 3);
-    mfc3->setPos(80, 260);
-    mfc3->setState(ComponentState::Normal);
-    m_scene->addItem(mfc3);
-    m_components["MFC3"] = mfc3;
-
-    GasMFCItem *mfc4 = new GasMFCItem("MFC4", 4);
-    mfc4->setPos(80, 320);
-    mfc4->setState(ComponentState::Normal);
-    m_scene->addItem(mfc4);
-    m_components["MFC4"] = mfc4;
-
-    // 阀门 (领结形)
+    // 阀门 - 沿管道分布
     ValveItem *v1 = new ValveItem("V1");
-    v1->setPos(180, 280);
+    v1->setPos(550, 370);
     v1->setOpen(false);
+    v1->setZValue(5);
     m_scene->addItem(v1);
     m_components["V1"] = v1;
 
     ValveItem *v2 = new ValveItem("V2");
-    v2->setPos(380, 280);
+    v2->setPos(470, 280);
     v2->setOpen(false);
+    v2->setZValue(5);
     m_scene->addItem(v2);
     m_components["V2"] = v2;
 
     ValveItem *v3 = new ValveItem("V3");
-    v3->setPos(700, 280);
+    v3->setPos(630, 280);
     v3->setOpen(false);
+    v3->setZValue(5);
     m_scene->addItem(v3);
     m_components["V3"] = v3;
 
     ValveItem *v4 = new ValveItem("V4");
-    v4->setPos(820, 350);
+    v4->setPos(200, 390);
     v4->setOpen(false);
+    v4->setZValue(5);
     m_scene->addItem(v4);
     m_components["V4"] = v4;
 
     ValveItem *v5 = new ValveItem("V5");
-    v5->setPos(380, 450);
+    v5->setPos(700, 370);
     v5->setOpen(false);
+    v5->setZValue(5);
     m_scene->addItem(v5);
     m_components["V5"] = v5;
 
     ValveItem *v6 = new ValveItem("V6");
-    v6->setPos(620, 450);
+    v6->setPos(100, 300);
     v6->setOpen(false);
+    v6->setZValue(5);
     m_scene->addItem(v6);
     m_components["V6"] = v6;
 
-    // ==================== 管道连接 ====================
+    // ==================== 右侧状态面板 ====================
 
-    // RF -> Chamber (虚线)
-    m_scene->addLine(310, 280, 500, 280, QPen(C_PIPE_INACTIVE, 4));
+    // 状态面板背景
+    QGraphicsRectItem *statusPanel = new QGraphicsRectItem(800, 73, 300, 300);
+    statusPanel->setBrush(QBrush(C_WIN_GRAY));
+    statusPanel->setPen(QPen(Qt::darkGray, 1));
+    statusPanel->setZValue(0);
+    m_scene->addItem(statusPanel);
 
-    // ICP -> Chamber (虚线)
-    m_scene->addLine(550, 130, 550, 230, QPen(C_PIPE_INACTIVE, 4));
-
-    // MFC1 -> V1
-    m_scene->addLine(102, 140, 180, 140, QPen(C_PIPE_INACTIVE, 4));
-    m_scene->addLine(180, 140, 180, 265, QPen(C_PIPE_INACTIVE, 4));
-
-    // MFC2 -> V1
-    m_scene->addLine(102, 200, 180, 200, QPen(C_PIPE_INACTIVE, 4));
-
-    // MFC3 -> V2
-    m_scene->addLine(102, 260, 150, 260, QPen(C_PIPE_INACTIVE, 4));
-    m_scene->addLine(150, 260, 150, 280, QPen(C_PIPE_INACTIVE, 4));
-    m_scene->addLine(150, 280, 380, 280, QPen(C_PIPE_INACTIVE, 4));
-
-    // MFC4 -> V2
-    m_scene->addLine(102, 320, 150, 320, QPen(C_PIPE_INACTIVE, 4));
-    m_scene->addLine(150, 320, 150, 295, QPen(C_PIPE_INACTIVE, 4));
-
-    // Chamber -> V3 -> Pressure
-    m_scene->addLine(600, 280, 700, 280, QPen(C_PIPE_INACTIVE, 4));
-
-    // Chamber -> V4 (向下)
-    m_scene->addLine(600, 300, 820, 300, QPen(C_PIPE_INACTIVE, 4));
-    m_scene->addLine(820, 300, 820, 335, QPen(C_PIPE_INACTIVE, 4));
-
-    // V5 -> MP
-    m_scene->addLine(380, 320, 380, 430, QPen(C_PIPE_INACTIVE, 4));
-    m_scene->addLine(380, 430, 205, 430, QPen(C_PIPE_INACTIVE, 4));
-    m_scene->addLine(205, 430, 205, 435, QPen(C_PIPE_INACTIVE, 4));
-
-    // V6 -> TP
-    m_scene->addLine(620, 320, 620, 430, QPen(C_PIPE_INACTIVE, 4));
-    m_scene->addLine(620, 430, 795, 430, QPen(C_PIPE_INACTIVE, 4));
-    m_scene->addLine(795, 430, 795, 435, QPen(C_PIPE_INACTIVE, 4));
-
-    // Pressure -> V4 -> TP
-    m_scene->addLine(822, 280, 870, 280, QPen(C_PIPE_INACTIVE, 4));
-    m_scene->addLine(870, 280, 870, 320, QPen(C_PIPE_INACTIVE, 4));
-    m_scene->addLine(870, 320, 820, 320, QPen(C_PIPE_INACTIVE, 4));
-
-    // Chuck -> Chamber
-    m_scene->addLine(550, 380, 550, 468, QPen(C_PIPE_INACTIVE, 4));
-
-    // ==================== 底部状态面板 ====================
-    QGraphicsRectItem *bottomPanel = new QGraphicsRectItem(0, 520, 1000, 200);
-    bottomPanel->setBrush(QBrush(C_WIN_LIGHT));
-    bottomPanel->setPen(QPen(Qt::darkGray, 1));
-    m_scene->addItem(bottomPanel);
-
-    // 面板标题
-    QGraphicsTextItem *panelTitle = new QGraphicsTextItem("System Power Up Lid Down");
-    panelTitle->setFont(QFont("Arial", 10, QFont::Bold));
-    panelTitle->setDefaultTextColor(Qt::black);
-    panelTitle->setPos(10, 530);
-    m_scene->addItem(panelTitle);
-
-    // 数据表格区域
-    QGraphicsRectItem *tableBg = new QGraphicsRectItem(10, 555, 400, 120);
-    tableBg->setBrush(QBrush(C_WIN_GRAY));
-    tableBg->setPen(QPen(Qt::darkGray, 1));
-    m_scene->addItem(tableBg);
-
-    // 参数行 1
-    QGraphicsTextItem *lidLabel = new QGraphicsTextItem("Lid:");
-    lidLabel->setFont(QFont("Arial", 9));
-    lidLabel->setDefaultTextColor(Qt::black);
-    lidLabel->setPos(20, 565);
-    m_scene->addItem(lidLabel);
-
-    QGraphicsRectItem *lidValue = new QGraphicsRectItem(60, 562, 80, 20);
-    lidValue->setBrush(QBrush(C_WIN_LIGHT));
-    lidValue->setPen(QPen(Qt::darkGray, 1));
-    m_scene->addItem(lidValue);
-
-    QGraphicsTextItem *lidValueText = new QGraphicsTextItem("OPEN");
-    lidValueText->setFont(QFont("Arial", 9));
-    lidValueText->setDefaultTextColor(Qt::black);
-    lidValueText->setPos(70, 565);
-    m_scene->addItem(lidValueText);
-
-    // 参数行 2
-    QGraphicsTextItem *procLabel = new QGraphicsTextItem("Process interlock:");
-    procLabel->setFont(QFont("Arial", 9));
-    procLabel->setDefaultTextColor(Qt::black);
-    procLabel->setPos(20, 595);
-    m_scene->addItem(procLabel);
-
-    // FAULT 显示（红色背景）
-    QGraphicsRectItem *faultBg = new QGraphicsRectItem(130, 592, 70, 20);
-    faultBg->setBrush(QBrush(C_LED_RED));
-    faultBg->setPen(Qt::NoPen);
-    m_scene->addItem(faultBg);
-
-    QGraphicsTextItem *faultText = new QGraphicsTextItem("FAULT");
-    faultText->setFont(QFont("Arial", 9, QFont::Bold));
-    faultText->setDefaultTextColor(Qt::white);
-    faultText->setPos(138, 595);
-    m_scene->addItem(faultText);
-
-    // 参数行 3 - Pressure
-    QGraphicsTextItem *presLabel = new QGraphicsTextItem("Pressure:");
-    presLabel->setFont(QFont("Arial", 9));
-    presLabel->setDefaultTextColor(Qt::black);
-    presLabel->setPos(20, 625);
-    m_scene->addItem(presLabel);
-
-    QGraphicsRectItem *presValue = new QGraphicsRectItem(80, 622, 100, 20);
-    presValue->setBrush(QBrush(C_WIN_LIGHT));
-    presValue->setPen(QPen(Qt::darkGray, 1));
-    m_scene->addItem(presValue);
-
-    QGraphicsTextItem *presValueText = new QGraphicsTextItem("0.000 Torr");
-    presValueText->setFont(QFont("Courier New", 9));
-    presValueText->setDefaultTextColor(Qt::black);
-    presValueText->setPos(90, 625);
-    m_scene->addItem(presValueText);
-
-    // 参数行 4 - Vent Time
-    QGraphicsTextItem *ventLabel = new QGraphicsTextItem("Vent Time Left:");
-    ventLabel->setFont(QFont("Arial", 9));
-    ventLabel->setDefaultTextColor(Qt::black);
-    ventLabel->setPos(20, 655);
-    m_scene->addItem(ventLabel);
-
-    QGraphicsRectItem *ventValue = new QGraphicsRectItem(120, 652, 60, 20);
-    ventValue->setBrush(QBrush(C_WIN_LIGHT));
-    ventValue->setPen(QPen(Qt::darkGray, 1));
-    m_scene->addItem(ventValue);
-
-    // ==================== 右侧控制按钮 ====================
-
-    // EVACUATE 按钮
-    QGraphicsRectItem *evacBtn = new QGraphicsRectItem(450, 560, 90, 35);
-    evacBtn->setBrush(QBrush(C_WIN_MEDIUM));
-    evacBtn->setPen(QPen(Qt::darkGray, 1));
-    m_scene->addItem(evacBtn);
-
-    // 3D 效果
-    QGraphicsLineItem *evacTop = new QGraphicsLineItem(451, 561, 538, 561, m_scene->itemAt(450, 560, QTransform()) ? nullptr : nullptr);
-    evacTop->setPen(QPen(Qt::white, 1));
-    m_scene->addItem(evacTop);
-
-    QGraphicsTextItem *evacLabel = new QGraphicsTextItem("EVACUATE");
-    evacLabel->setFont(QFont("Arial", 9, QFont::Bold));
-    evacLabel->setDefaultTextColor(Qt::black);
-    evacLabel->setPos(460, 570);
-    m_scene->addItem(evacLabel);
-
-    // STOP 按钮
-    QGraphicsRectItem *stop2Btn = new QGraphicsRectItem(450, 605, 90, 35);
-    stop2Btn->setBrush(QBrush(C_WIN_MEDIUM));
-    stop2Btn->setPen(QPen(Qt::darkGray, 1));
-    m_scene->addItem(stop2Btn);
-
-    QGraphicsTextItem *stop2Label = new QGraphicsTextItem("STOP");
-    stop2Label->setFont(QFont("Arial", 9, QFont::Bold));
-    stop2Label->setDefaultTextColor(Qt::black);
-    stop2Label->setPos(475, 615);
-    m_scene->addItem(stop2Label);
-
-    // VENT 按钮
-    QGraphicsRectItem *ventBtn = new QGraphicsRectItem(450, 650, 90, 35);
-    ventBtn->setBrush(QBrush(C_WIN_MEDIUM));
-    ventBtn->setPen(QPen(Qt::darkGray, 1));
-    m_scene->addItem(ventBtn);
-
-    QGraphicsTextItem *vent2Label = new QGraphicsTextItem("VENT");
-    vent2Label->setFont(QFont("Arial", 9, QFont::Bold));
-    vent2Label->setDefaultTextColor(Qt::black);
-    vent2Label->setPos(472, 660);
-    m_scene->addItem(vent2Label);
-
-    // ==================== 右侧状态 LED 面板 ====================
-
-    QGraphicsTextItem *statusTitle = new QGraphicsTextItem("STATUS");
-    statusTitle->setFont(QFont("Arial", 10, QFont::Bold));
-    statusTitle->setDefaultTextColor(Qt::black);
-    statusTitle->setPos(580, 530);
+    // STATUS 标题
+    QGraphicsSimpleTextItem *statusTitle = new QGraphicsSimpleTextItem("STATUS");
+    statusTitle->setFont(QFont("Arial", 11, QFont::Bold));
+    statusTitle->setBrush(QBrush(Qt::black));
+    statusTitle->setPos(815, 85);
+    statusTitle->setZValue(10);
     m_scene->addItem(statusTitle);
 
-    // Process Status
-    QGraphicsTextItem *procStatLabel = new QGraphicsTextItem("Process:");
-    procStatLabel->setFont(QFont("Arial", 9));
-    procStatLabel->setDefaultTextColor(Qt::black);
-    procStatLabel->setPos(580, 560);
-    m_scene->addItem(procStatLabel);
+    // Process 状态
+    QGraphicsSimpleTextItem *procLabel = new QGraphicsSimpleTextItem("Process:");
+    procLabel->setFont(QFont("Arial", 9));
+    procLabel->setBrush(QBrush(Qt::black));
+    procLabel->setPos(815, 120);
+    procLabel->setZValue(10);
+    m_scene->addItem(procLabel);
 
-    LEDIndicator *procLed = new LEDIndicator(false, C_LED_GREEN, C_LED_GREEN_DARK);
-    procLed->setPos(650, 557);
+    LEDIndicator *procLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN_DARK);
+    procLed->setPos(890, 115);
+    procLed->setZValue(10);
     m_scene->addItem(procLed);
 
-    QGraphicsTextItem *procStatText = new QGraphicsTextItem("READY");
-    procStatText->setFont(QFont("Arial", 9, QFont::Bold));
-    procStatText->setDefaultTextColor(C_LED_GREEN);
-    procStatText->setPos(665, 560);
-    m_scene->addItem(procStatText);
+    QGraphicsSimpleTextItem *procStat = new QGraphicsSimpleTextItem("READY");
+    procStat->setFont(QFont("Arial", 9, QFont::Bold));
+    procStat->setBrush(QBrush(C_LED_GREEN));
+    procStat->setPos(905, 120);
+    procStat->setZValue(10);
+    m_scene->addItem(procStat);
 
-    // RF Status
-    QGraphicsTextItem *rfStatLabel = new QGraphicsTextItem("RF:");
-    rfStatLabel->setFont(QFont("Arial", 9));
-    rfStatLabel->setDefaultTextColor(Qt::black);
-    rfStatLabel->setPos(580, 590);
-    m_scene->addItem(rfStatLabel);
+    // RF 状态
+    QGraphicsSimpleTextItem *rfLabel = new QGraphicsSimpleTextItem("RF:");
+    rfLabel->setFont(QFont("Arial", 9));
+    rfLabel->setBrush(QBrush(Qt::black));
+    rfLabel->setPos(815, 155);
+    rfLabel->setZValue(10);
+    m_scene->addItem(rfLabel);
 
     LEDIndicator *rfLed = new LEDIndicator(false, C_LED_GREEN, C_LED_GREEN_DARK);
-    rfLed->setPos(620, 587);
+    rfLed->setPos(850, 150);
+    rfLed->setZValue(10);
     m_scene->addItem(rfLed);
 
-    QGraphicsTextItem *rfStatText = new QGraphicsTextItem("OFF");
-    rfStatText->setFont(QFont("Arial", 9, QFont::Bold));
-    rfStatText->setDefaultTextColor(C_LED_GREEN_DARK);
-    rfStatText->setPos(635, 590);
-    m_scene->addItem(rfStatText);
+    QGraphicsSimpleTextItem *rfStat = new QGraphicsSimpleTextItem("OFF");
+    rfStat->setFont(QFont("Arial", 9, QFont::Bold));
+    rfStat->setBrush(QBrush(C_LED_GREEN_DARK));
+    rfStat->setPos(865, 155);
+    rfStat->setZValue(10);
+    m_scene->addItem(rfStat);
 
-    // ICP Status
-    QGraphicsTextItem *icpStatLabel = new QGraphicsTextItem("ICP:");
-    icpStatLabel->setFont(QFont("Arial", 9));
-    icpStatLabel->setDefaultTextColor(Qt::black);
-    icpStatLabel->setPos(580, 620);
-    m_scene->addItem(icpStatLabel);
+    // ICP 状态
+    QGraphicsSimpleTextItem *icpLabel = new QGraphicsSimpleTextItem("ICP:");
+    icpLabel->setFont(QFont("Arial", 9));
+    icpLabel->setBrush(QBrush(Qt::black));
+    icpLabel->setPos(815, 190);
+    icpLabel->setZValue(10);
+    m_scene->addItem(icpLabel);
 
     LEDIndicator *icpLed = new LEDIndicator(false, C_LED_GREEN, C_LED_GREEN_DARK);
-    icpLed->setPos(620, 617);
+    icpLed->setPos(850, 185);
+    icpLed->setZValue(10);
     m_scene->addItem(icpLed);
 
-    QGraphicsTextItem *icpStatText = new QGraphicsTextItem("OFF");
-    icpStatText->setFont(QFont("Arial", 9, QFont::Bold));
-    icpStatText->setDefaultTextColor(C_LED_GREEN_DARK);
-    icpStatText->setPos(635, 620);
-    m_scene->addItem(icpStatText);
+    QGraphicsSimpleTextItem *icpStat = new QGraphicsSimpleTextItem("OFF");
+    icpStat->setFont(QFont("Arial", 9, QFont::Bold));
+    icpStat->setBrush(QBrush(C_LED_GREEN_DARK));
+    icpStat->setPos(865, 190);
+    icpStat->setZValue(10);
+    m_scene->addItem(icpStat);
 
-    // Water Status
-    QGraphicsTextItem *waterLabel = new QGraphicsTextItem("Water:");
+    // Water 状态
+    QGraphicsSimpleTextItem *waterLabel = new QGraphicsSimpleTextItem("Water:");
     waterLabel->setFont(QFont("Arial", 9));
-    waterLabel->setDefaultTextColor(Qt::black);
-    waterLabel->setPos(580, 650);
+    waterLabel->setBrush(QBrush(Qt::black));
+    waterLabel->setPos(815, 225);
+    waterLabel->setZValue(10);
     m_scene->addItem(waterLabel);
 
-    // Water Off 警告（红色）
-    QGraphicsRectItem *waterOffBg = new QGraphicsRectItem(640, 647, 80, 20);
+    // Water Off 警告框
+    QGraphicsRectItem *waterOffBg = new QGraphicsRectItem(880, 220, 90, 22);
     waterOffBg->setBrush(QBrush(C_LED_RED));
     waterOffBg->setPen(Qt::NoPen);
+    waterOffBg->setZValue(10);
     m_scene->addItem(waterOffBg);
 
-    QGraphicsTextItem *waterOffText = new QGraphicsTextItem("Water Off");
-    waterOffText->setFont(QFont("Arial", 8, QFont::Bold));
-    waterOffText->setDefaultTextColor(Qt::white);
-    waterOffText->setPos(650, 650);
-    m_scene->addItem(waterOffText);
+    QGraphicsSimpleTextItem *waterOff = new QGraphicsSimpleTextItem("Water Off");
+    waterOff->setFont(QFont("Arial", 9, QFont::Bold));
+    waterOff->setBrush(QBrush(Qt::white));
+    waterOff->setPos(890, 225);
+    waterOff->setZValue(11);
+    m_scene->addItem(waterOff);
 
-    // ==================== 图例 ====================
+    // ==================== 底部状态面板 ====================
 
-    QGraphicsTextItem *legendTitle = new QGraphicsTextItem("Legend:");
-    legendTitle->setFont(QFont("Arial", 9, QFont::Bold));
-    legendTitle->setDefaultTextColor(Qt::black);
-    legendTitle->setPos(800, 530);
+    // 面板 1: System power up lid down
+    QGraphicsRectItem *panel1 = new QGraphicsRectItem(10, 560, 380, 120);
+    panel1->setBrush(QBrush(C_WIN_GRAY));
+    panel1->setPen(QPen(Qt::darkGray, 1));
+    panel1->setZValue(0);
+    m_scene->addItem(panel1);
+
+    QGraphicsSimpleTextItem *panel1Title = new QGraphicsSimpleTextItem("System power up lid down");
+    panel1Title->setFont(QFont("Arial", 10, QFont::Bold));
+    panel1Title->setBrush(QBrush(Qt::black));
+    panel1Title->setPos(20, 570);
+    panel1Title->setZValue(10);
+    m_scene->addItem(panel1Title);
+
+    // Lid 状态
+    QGraphicsSimpleTextItem *lidLabel = new QGraphicsSimpleTextItem("Lid:");
+    lidLabel->setFont(QFont("Arial", 9));
+    lidLabel->setBrush(QBrush(Qt::black));
+    lidLabel->setPos(20, 600);
+    lidLabel->setZValue(10);
+    m_scene->addItem(lidLabel);
+
+    // Lid 显示框
+    QGraphicsRectItem *lidBox = new QGraphicsRectItem(55, 597, 80, 20);
+    lidBox->setBrush(QBrush(C_WIN_LIGHT));
+    lidBox->setPen(QPen(Qt::darkGray, 1));
+    lidBox->setZValue(10);
+    m_scene->addItem(lidBox);
+
+    QGraphicsSimpleTextItem *lidValue = new QGraphicsSimpleTextItem("OPEN");
+    lidValue->setFont(QFont("Arial", 9));
+    lidValue->setBrush(QBrush(Qt::black));
+    lidValue->setPos(70, 600);
+    lidValue->setZValue(11);
+    m_scene->addItem(lidValue);
+
+    // Pirani 压力计
+    QGraphicsSimpleTextItem *piraniLabel = new QGraphicsSimpleTextItem("Pirani:");
+    piraniLabel->setFont(QFont("Arial", 9));
+    piraniLabel->setBrush(QBrush(Qt::black));
+    piraniLabel->setPos(20, 630);
+    piraniLabel->setZValue(10);
+    m_scene->addItem(piraniLabel);
+
+    QGraphicsRectItem *piraniBox = new QGraphicsRectItem(65, 627, 90, 20);
+    piraniBox->setBrush(QBrush(Qt::black));
+    piraniBox->setPen(Qt::NoPen);
+    piraniBox->setZValue(10);
+    m_scene->addItem(piraniBox);
+
+    QGraphicsSimpleTextItem *piraniValue = new QGraphicsSimpleTextItem("8.6E-4 mbar");
+    piraniValue->setFont(QFont("Courier New", 9));
+    piraniValue->setBrush(QBrush(C_LED_GREEN));
+    piraniValue->setPos(70, 630);
+    piraniValue->setZValue(11);
+    m_scene->addItem(piraniValue);
+
+    // Vent Time Left
+    QGraphicsSimpleTextItem *ventLabel = new QGraphicsSimpleTextItem("Vent Time Left:");
+    ventLabel->setFont(QFont("Arial", 9));
+    ventLabel->setBrush(QBrush(Qt::black));
+    ventLabel->setPos(20, 660);
+    ventLabel->setZValue(10);
+    m_scene->addItem(ventLabel);
+
+    QGraphicsRectItem *ventBox = new QGraphicsRectItem(110, 657, 60, 20);
+    ventBox->setBrush(QBrush(C_WIN_LIGHT));
+    ventBox->setPen(QPen(Qt::darkGray, 1));
+    ventBox->setZValue(10);
+    m_scene->addItem(ventBox);
+
+    QGraphicsSimpleTextItem *ventValue = new QGraphicsSimpleTextItem("0 s");
+    ventValue->setFont(QFont("Arial", 9));
+    ventValue->setBrush(QBrush(Qt::black));
+    ventValue->setPos(120, 660);
+    ventValue->setZValue(11);
+    m_scene->addItem(ventValue);
+
+    // ==================== 底部控制按钮 ====================
+
+    // EVACUATE 按钮
+    InteractiveButton *evacBtn = new InteractiveButton("EVACUATE");
+    evacBtn->setPos(420, 580);
+    evacBtn->setZValue(10);
+    m_scene->addItem(evacBtn);
+
+    // STOP 按钮
+    InteractiveButton *stop2Btn = new InteractiveButton("STOP");
+    stop2Btn->setPos(420, 620);
+    stop2Btn->setZValue(10);
+    m_scene->addItem(stop2Btn);
+
+    // VENT 按钮
+    InteractiveButton *vent2Btn = new InteractiveButton("VENT");
+    vent2Btn->setPos(420, 660);
+    vent2Btn->setZValue(10);
+    m_scene->addItem(vent2Btn);
+
+    // ==================== 右侧图例面板 ====================
+
+    QGraphicsRectItem *legendPanel = new QGraphicsRectItem(800, 373, 300, 180);
+    legendPanel->setBrush(QBrush(C_WIN_GRAY));
+    legendPanel->setPen(QPen(Qt::darkGray, 1));
+    legendPanel->setZValue(0);
+    m_scene->addItem(legendPanel);
+
+    QGraphicsSimpleTextItem *legendTitle = new QGraphicsSimpleTextItem("Legend:");
+    legendTitle->setFont(QFont("Arial", 10, QFont::Bold));
+    legendTitle->setBrush(QBrush(Qt::black));
+    legendTitle->setPos(815, 385);
+    legendTitle->setZValue(10);
     m_scene->addItem(legendTitle);
 
     // Valve Open
-    LEDIndicator *valveOpenLed = new LEDIndicator(true, C_LED_GREEN_DARK, C_LED_GREEN_DARK);
-    valveOpenLed->setPos(800, 560);
+    LEDIndicator *valveOpenLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN);
+    valveOpenLed->setPos(815, 415);
+    valveOpenLed->setZValue(10);
     m_scene->addItem(valveOpenLed);
 
-    QGraphicsTextItem *valveOpenLabel = new QGraphicsTextItem("Valve Open");
-    valveOpenLabel->setFont(QFont("Arial", 8));
-    valveOpenLabel->setDefaultTextColor(Qt::black);
-    valveOpenLabel->setPos(815, 563);
+    QGraphicsSimpleTextItem *valveOpenLabel = new QGraphicsSimpleTextItem("Valve Open");
+    valveOpenLabel->setFont(QFont("Arial", 9));
+    valveOpenLabel->setBrush(QBrush(Qt::black));
+    valveOpenLabel->setPos(830, 418);
+    valveOpenLabel->setZValue(10);
     m_scene->addItem(valveOpenLabel);
 
     // Valve Closed
-    LEDIndicator *valveClosedLed = new LEDIndicator(true, C_LED_RED_DARK, C_LED_RED_DARK);
-    valveClosedLed->setPos(800, 585);
+    LEDIndicator *valveClosedLed = new LEDIndicator(true, C_LED_RED, C_LED_RED);
+    valveClosedLed->setPos(815, 445);
+    valveClosedLed->setZValue(10);
     m_scene->addItem(valveClosedLed);
 
-    QGraphicsTextItem *valveClosedLabel = new QGraphicsTextItem("Valve Closed");
-    valveClosedLabel->setFont(QFont("Arial", 8));
-    valveClosedLabel->setDefaultTextColor(Qt::black);
-    valveClosedLabel->setPos(815, 588);
+    QGraphicsSimpleTextItem *valveClosedLabel = new QGraphicsSimpleTextItem("Valve Closed");
+    valveClosedLabel->setFont(QFont("Arial", 9));
+    valveClosedLabel->setBrush(QBrush(Qt::black));
+    valveClosedLabel->setPos(830, 448);
+    valveClosedLabel->setZValue(10);
     m_scene->addItem(valveClosedLabel);
 
     // Pump Running
-    LEDIndicator *pumpRunLed = new LEDIndicator(true, C_LED_GREEN_DARK, C_LED_GREEN_DARK);
-    pumpRunLed->setPos(800, 615);
+    LEDIndicator *pumpRunLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN);
+    pumpRunLed->setPos(815, 475);
+    pumpRunLed->setZValue(10);
     m_scene->addItem(pumpRunLed);
 
-    QGraphicsTextItem *pumpRunLabel = new QGraphicsTextItem("Pump Running");
-    pumpRunLabel->setFont(QFont("Arial", 8));
-    pumpRunLabel->setDefaultTextColor(Qt::black);
-    pumpRunLabel->setPos(815, 618);
+    QGraphicsSimpleTextItem *pumpRunLabel = new QGraphicsSimpleTextItem("Pump Running");
+    pumpRunLabel->setFont(QFont("Arial", 9));
+    pumpRunLabel->setBrush(QBrush(Qt::black));
+    pumpRunLabel->setPos(830, 478);
+    pumpRunLabel->setZValue(10);
     m_scene->addItem(pumpRunLabel);
+
+    // Pump Stopped
+    LEDIndicator *pumpStopLed = new LEDIndicator(true, C_LED_RED, C_LED_RED);
+    pumpStopLed->setPos(815, 505);
+    pumpStopLed->setZValue(10);
+    m_scene->addItem(pumpStopLed);
+
+    QGraphicsSimpleTextItem *pumpStopLabel = new QGraphicsSimpleTextItem("Pump Stopped");
+    pumpStopLabel->setFont(QFont("Arial", 9));
+    pumpStopLabel->setBrush(QBrush(Qt::black));
+    pumpStopLabel->setPos(830, 508);
+    pumpStopLabel->setZValue(10);
+    m_scene->addItem(pumpStopLabel);
+
+    // Water Fault
+    LEDIndicator *waterFaultLed = new LEDIndicator(true, C_LED_RED, C_LED_RED);
+    waterFaultLed->setPos(815, 535);
+    waterFaultLed->setZValue(10);
+    m_scene->addItem(waterFaultLed);
+
+    QGraphicsSimpleTextItem *waterFaultLabel = new QGraphicsSimpleTextItem("Water Fault");
+    waterFaultLabel->setFont(QFont("Arial", 9));
+    waterFaultLabel->setBrush(QBrush(Qt::black));
+    waterFaultLabel->setPos(830, 538);
+    waterFaultLabel->setZValue(10);
+    m_scene->addItem(waterFaultLabel);
+
+    // 第二列图例
+    // Process Active
+    LEDIndicator *procActLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN);
+    procActLed->setPos(970, 415);
+    procActLed->setZValue(10);
+    m_scene->addItem(procActLed);
+
+    QGraphicsSimpleTextItem *procActLabel = new QGraphicsSimpleTextItem("Process Active");
+    procActLabel->setFont(QFont("Arial", 9));
+    procActLabel->setBrush(QBrush(Qt::black));
+    procActLabel->setPos(985, 418);
+    procActLabel->setZValue(10);
+    m_scene->addItem(procActLabel);
+
+    // Interlock OK
+    LEDIndicator *intOkLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN);
+    intOkLed->setPos(970, 445);
+    intOkLed->setZValue(10);
+    m_scene->addItem(intOkLed);
+
+    QGraphicsSimpleTextItem *intOkLabel = new QGraphicsSimpleTextItem("Interlock OK");
+    intOkLabel->setFont(QFont("Arial", 9));
+    intOkLabel->setBrush(QBrush(Qt::black));
+    intOkLabel->setPos(985, 448);
+    intOkLabel->setZValue(10);
+    m_scene->addItem(intOkLabel);
+
+    // Interlock Fault
+    LEDIndicator *intFaultLed = new LEDIndicator(true, C_LED_RED, C_LED_RED);
+    intFaultLed->setPos(970, 475);
+    intFaultLed->setZValue(10);
+    m_scene->addItem(intFaultLed);
+
+    QGraphicsSimpleTextItem *intFaultLabel = new QGraphicsSimpleTextItem("Interlock Fault");
+    intFaultLabel->setFont(QFont("Arial", 9));
+    intFaultLabel->setBrush(QBrush(Qt::black));
+    intFaultLabel->setPos(985, 478);
+    intFaultLabel->setZValue(10);
+    m_scene->addItem(intFaultLabel);
+}
+
+// 添加管道线
+void HardwareDiagram::addPipeLine(qreal x1, qreal y1, qreal x2, qreal y2, const QPen &pen)
+{
+    QGraphicsLineItem *pipe = new QGraphicsLineItem(x1, y1, x2, y2);
+    pipe->setPen(pen);
+    pipe->setZValue(2);
+    m_scene->addItem(pipe);
 }
 
 void HardwareDiagram::updateComponentState(const QString &name, ComponentState state)
@@ -1082,8 +1322,10 @@ void HardwareDiagram::setValveOpen(const QString &name, bool open)
 
 void HardwareDiagram::setPipeFlow(const QString &name, bool flowing)
 {
-    Q_UNUSED(name);
-    Q_UNUSED(flowing);
+    PipeItem *pipe = dynamic_cast<PipeItem*>(m_components.value(name, nullptr));
+    if (pipe) {
+        pipe->setFlowDirection(flowing);
+    }
 }
 
 HardwareComponent* HardwareDiagram::getComponent(const QString &name) const
@@ -1093,9 +1335,8 @@ HardwareComponent* HardwareDiagram::getComponent(const QString &name) const
 
 void HardwareDiagram::onItemClicked(QGraphicsSceneMouseEvent *event)
 {
-    Q_UNUSED(event);
-    HardwareComponent *item = dynamic_cast<HardwareComponent*>(sender());
+    QGraphicsItem *item = itemAt(event->scenePos().toPoint());
     if (item) {
-        emit componentClicked(item->getName(), item->getType());
+        qDebug() << "Clicked on item at" << event->scenePos();
     }
 }
