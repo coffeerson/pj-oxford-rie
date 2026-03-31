@@ -38,8 +38,6 @@ public:
     MenuButton(const QString &text, QGraphicsItem *parent = nullptr)
         : QGraphicsItemGroup(parent), m_text(text), m_menuVisible(false), m_hovered(false), m_callback(nullptr)
     {
-        setHandlesChildEvents(true);
-        setAcceptHoverEvents(true);
         setFlag(QGraphicsItem::ItemIsSelectable);
 
         // 按钮背景
@@ -127,8 +125,6 @@ public:
     MenuItem(const QString &text, int id, QGraphicsItem *parent = nullptr)
         : QGraphicsItemGroup(parent), m_text(text), m_id(id), m_hovered(false), m_callback(nullptr)
     {
-        setHandlesChildEvents(true);
-        setAcceptHoverEvents(true);
 
         m_bg = new QGraphicsRectItem(-45, -10, 175, 24, this);
         m_bg->setBrush(QBrush(C_WIN_LIGHT));
@@ -182,7 +178,6 @@ public:
     MenuPanel(QGraphicsItem *parent = nullptr)
         : QGraphicsItemGroup(parent), m_visible(false)
     {
-        setHandlesChildEvents(true);
         setFlag(QGraphicsItem::ItemIsSelectable, false);
         setFlag(QGraphicsItem::ItemIsMovable, false);
         setZValue(100);
@@ -231,8 +226,6 @@ public:
     InteractiveButton(const QString &text, QGraphicsItem *parent = nullptr)
         : QGraphicsItemGroup(parent), m_text(text), m_pressed(false), m_hovered(false), m_callback(nullptr)
     {
-        setHandlesChildEvents(true);
-        setAcceptHoverEvents(true);
         setFlag(QGraphicsItem::ItemIsSelectable);
 
         m_bg = new QGraphicsRectItem(-40, -12, 80, 24, this);
