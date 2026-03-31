@@ -370,6 +370,7 @@ void MainWindow::onConnectionStatusChanged()
 
 void MainWindow::updateConnectionStatus()
 {
+    if (!m_connectionStatusLabel) return;  // Guard against null
     if (m_device->isConnected()) {
         m_connectionStatusLabel->setText(QStringLiteral("已连接"));
         m_connectionStatusLabel->setStyleSheet("color: green; font-weight: bold;");
