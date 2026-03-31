@@ -290,8 +290,12 @@ QGroupBox *MainWindow::createRecipeGroup()
     btnLayout->addWidget(m_stopRecipeBtn);
     layout->addLayout(btnLayout);
 
-    connect(m_recipeComboBox, QOverload<const QString &>::of(&QComboBox::currentIndexChanged),
-            this, &MainWindow::onRecipeSelectionChanged);
+    connect(m_recipeComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int index) {
+        if (index >= 0) {
+            onRecipeSelectionChanged(m_recipeComboBox->itemText(index));
+        }
+    });
     connect(m_runRecipeBtn, &QPushButton::clicked, this, &MainWindow::onRunRecipeClicked);
     connect(m_stopRecipeBtn, &QPushButton::clicked, this, &MainWindow::onStopRecipeClicked);
     connect(m_saveRecipeBtn, &QPushButton::clicked, this, &MainWindow::onSaveRecipeClicked);
