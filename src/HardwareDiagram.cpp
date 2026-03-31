@@ -955,6 +955,7 @@ HardwareDiagram::HardwareDiagram(QWidget *parent)
     setRenderHint(QPainter::Antialiasing);
     setBackgroundBrush(QBrush(C_WIN_GRAY));
     setContextMenuPolicy(Qt::CustomContextMenu);
+    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
     m_scene->setSceneRect(0, 0, 1100, 750);
     setupLayout();
