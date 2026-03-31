@@ -1,0 +1,34 @@
+# Build outputs
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+*.moc
+*.rcc
+*.qmlc
+
+# Qt Creator
+Makefile*
+*.pro.user*
+*.autosave
+
+# Qt build
+ui_*.h
+qrc_*.cpp
+moc_*.cpp
+moc_*.o
+
+# Executables
+pj-oxford-rie
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.swp
+*.swo
+*~
