@@ -326,6 +326,7 @@ void MainWindow::createLogGroup()
 
 void MainWindow::updateRecipeComboBox()
 {
+    if (!m_recipeComboBox) return;  // Guard against null pointer
     QStringList names = m_recipeManager->getRecipeNames();
     m_recipeComboBox->clear();
     m_recipeComboBox->addItems(names);
