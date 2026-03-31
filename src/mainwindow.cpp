@@ -14,6 +14,9 @@
 #include <QDateTime>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QToolBar>
+#include <QAction>
+#include <QStatusBar>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -63,42 +66,44 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUi()
 {
-    QWidget *centralWidget = new QWidget(this);
-    QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
+    // 设置窗口标题和大小（模仿 Windows Classic 风格）
+    setWindowTitle("Oxford Plasmalab System 133 - PC 2000");
+    setGeometry(100, 100, 1100, 780);
 
-    // 顶部: 连接管理
-    createConnectionGroup();
-
-    // 创建硬件框架图
+    // 创建硬件框架图（这是主界面）
     m_hardwareDiagram = new HardwareDiagram(this);
 
-    // 中间: Tab 页面
-    QTabWidget *tabWidget = new QTabWidget(this);
+    // 直接设置为中央控件，不再使用 Tab
+    setCentralWidget(m_hardwareDiagram);
 
-    // Tab 1: 硬件框架图
-    tabWidget->addTab(m_hardwareDiagram, QStringLiteral("硬件框架图"));
+    // 连接状态监控信号到硬件框架图更新
+    connect(m_statusMonitor, &StatusMonitor::rfPowerChanged, this, &MainWindow::onRFPowerChanged);
+    connect(m_statusMonitor, &StatusMonitor::icpPowerChanged, this, &MainWindow::onICPPowerChanged);
+    connect(m_statusMonitor, &StatusMonitor::pressureChanged, this, &MainWindow::onPressureChanged);
+    connect(m_statusMonitor, &StatusMonitor::temperatureChanged, this, &MainWindow::onTemperatureChanged);
 
-    // Tab 2: 手动控制
-    QWidget *controlWidget = new QWidget(this);
-    QVBoxLayout *controlLayout = new QVBoxLayout(controlWidget);
-    controlLayout->addWidget(createManualControlGroup());
-    controlLayout->addStretch();
-    tabWidget->addTab(controlWidget, QStringLiteral("手动控制"));
+    // 添加工具栏（快速访问常用功能）
+    QToolBar *toolbar = addToolBar(QStringLiteral("工具栏"));
+    toolbar->setMovable(false);
 
-    // Tab 3: 配方管理
-    QWidget *recipeWidget = new QWidget(this);
-    QVBoxLayout *recipeLayout = new QVBoxLayout(recipeWidget);
-    recipeLayout->addWidget(createRecipeGroup());
-    recipeLayout->addStretch();
-    tabWidget->addTab(recipeWidget, QStringLiteral("配方管理"));
+    QAction *connectAction = new QAction(QStringLiteral("连接"), this);
+    QAction *disconnectAction = new QAction(QStringLiteral("断开"), this);
+    QAction *startAction = new QAction(QStringLiteral("开始工艺"), this);
+    QAction *stopAction = new QAction(QStringLiteral("停止"), this);
 
-    mainLayout->addWidget(tabWidget, 1);
+    toolbar->addAction(connectAction);
+    toolbar->addAction(disconnectAction);
+    toolbar->addSeparator();
+    toolbar->addAction(startAction);
+    toolbar->addAction(stopAction);
 
-    // 底部: 日志
-    createLogGroup();
-    mainLayout->addWidget(m_logTextEdit, 1);
+    connect(connectAction, &QAction::triggered, this, &MainWindow::onConnectClicked);
+    connect(disconnectAction, &QAction::triggered, this, &MainWindow::onDisconnectClicked);
+    connect(startAction, &QAction::triggered, this, &MainWindow::onStartProcessClicked);
+    connect(stopAction, &QAction::triggered, this, &MainWindow::onStopProcessClicked);
 
-    setCentralWidget(centralWidget);
+    // 底部状态栏
+    statusBar()->showMessage(QStringLiteral("未连接"));
 }
 
 void MainWindow::createConnectionGroup()
