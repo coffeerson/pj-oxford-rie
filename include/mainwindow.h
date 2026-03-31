@@ -89,41 +89,41 @@ private:
     HardwareDiagram *m_hardwareDiagram;
 
     // 连接相关
-    QLineEdit *m_hostEdit;
-    QSpinBox *m_portSpinBox;
-    QPushButton *m_connectBtn;
-    QPushButton *m_disconnectBtn;
-    QLabel *m_connectionStatusLabel;
+    QLineEdit *m_hostEdit = nullptr;
+    QSpinBox *m_portSpinBox = nullptr;
+    QPushButton *m_connectBtn = nullptr;
+    QPushButton *m_disconnectBtn = nullptr;
+    QLabel *m_connectionStatusLabel = nullptr;
 
     // 状态显示
-    QLabel *m_rfPowerLabel;
-    QLabel *m_icpPowerLabel;
-    QLabel *m_pressureLabel;
-    QLabel *m_temperatureLabel;
-    QLabel *m_gasFlowLabel[4];
-    QLabel *m_statusLabel;
+    QLabel *m_rfPowerLabel = nullptr;
+    QLabel *m_icpPowerLabel = nullptr;
+    QLabel *m_pressureLabel = nullptr;
+    QLabel *m_temperatureLabel = nullptr;
+    QLabel *m_gasFlowLabel[4] = {nullptr};
+    QLabel *m_statusLabel = nullptr;
 
     // 手动控制
-    QDoubleSpinBox *m_rfPowerSpinBox;
-    QDoubleSpinBox *m_icpPowerSpinBox;
-    QDoubleSpinBox *m_pressureSpinBox;
-    QDoubleSpinBox *m_temperatureSpinBox;
-    QDoubleSpinBox *m_gasFlowSpinBox[4];
-    QComboBox *m_gasFlowChannelComboBox;
+    QDoubleSpinBox *m_rfPowerSpinBox = nullptr;
+    QDoubleSpinBox *m_icpPowerSpinBox = nullptr;
+    QDoubleSpinBox *m_pressureSpinBox = nullptr;
+    QDoubleSpinBox *m_temperatureSpinBox = nullptr;
+    QDoubleSpinBox *m_gasFlowSpinBox[4] = {nullptr};
+    QComboBox *m_gasFlowChannelComboBox = nullptr;
 
     // 配方管理
-    QComboBox *m_recipeComboBox;
-    QTableWidget *m_recipeTable;
-    QPushButton *m_newRecipeBtn;
-    QPushButton *m_saveRecipeBtn;
-    QPushButton *m_loadRecipeBtn;
-    QPushButton *m_runRecipeBtn;
-    QPushButton *m_stopRecipeBtn;
-    QLabel *m_recipeProgressLabel;
+    QComboBox *m_recipeComboBox = nullptr;
+    QTableWidget *m_recipeTable = nullptr;
+    QPushButton *m_newRecipeBtn = nullptr;
+    QPushButton *m_saveRecipeBtn = nullptr;
+    QPushButton *m_loadRecipeBtn = nullptr;
+    QPushButton *m_runRecipeBtn = nullptr;
+    QPushButton *m_stopRecipeBtn = nullptr;
+    QLabel *m_recipeProgressLabel = nullptr;
 
     // 日志
-    QTextEdit *m_logTextEdit;
-    QPushButton *m_clearLogBtn;
+    QTextEdit *m_logTextEdit = nullptr;
+    QPushButton *m_clearLogBtn = nullptr;
 
     // 定时器
     QTimer *m_uiUpdateTimer;
