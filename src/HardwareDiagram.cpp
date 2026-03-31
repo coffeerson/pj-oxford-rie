@@ -450,7 +450,7 @@ void ChamberItem::updateAppearance()
     addToGroup(center);
 
     // 标签
-    QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem("1", this);
+    QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem("1", nullptr);
     label->setFont(QFont("Arial", 10, QFont::Bold));
     label->setBrush(QBrush(Qt::white));
     label->setPos(-4, -6);
@@ -608,7 +608,7 @@ void PumpItem::updateAppearance()
     addToGroup(base);
 
     // P 标记
-    QGraphicsSimpleTextItem *pLabel = new QGraphicsSimpleTextItem("P", this);
+    QGraphicsSimpleTextItem *pLabel = new QGraphicsSimpleTextItem("P", nullptr);
     pLabel->setFont(QFont("Arial", 14, QFont::Bold));
     pLabel->setBrush(QBrush(Qt::white));
     pLabel->setPos(-6, -5);
@@ -660,19 +660,19 @@ void RFGeneratorItem::updateAppearance()
     rf->setPen(QPen(Qt::darkGray, 1));
     addToGroup(rf);
 
-    QGraphicsSimpleTextItem *freq = new QGraphicsSimpleTextItem("13.56", this);
+    QGraphicsSimpleTextItem *freq = new QGraphicsSimpleTextItem("13.56", nullptr);
     freq->setFont(QFont("Arial", 11, QFont::Bold));
     freq->setBrush(QBrush(Qt::white));
     freq->setPos(-22, -18);
     addToGroup(freq);
 
-    QGraphicsSimpleTextItem *mhz = new QGraphicsSimpleTextItem("MHz", this);
+    QGraphicsSimpleTextItem *mhz = new QGraphicsSimpleTextItem("MHz", nullptr);
     mhz->setFont(QFont("Arial", 7));
     mhz->setBrush(QBrush(Qt::white));
     mhz->setPos(-15, 0);
     addToGroup(mhz);
 
-    QGraphicsSimpleTextItem *rfLabel = new QGraphicsSimpleTextItem("RF", this);
+    QGraphicsSimpleTextItem *rfLabel = new QGraphicsSimpleTextItem("RF", nullptr);
     rfLabel->setFont(QFont("Arial", 8));
     rfLabel->setBrush(QBrush(QColor(180, 180, 180)));
     rfLabel->setPos(-8, 15);
@@ -714,19 +714,19 @@ void ICPGeneratorItem::updateAppearance()
     icp->setPen(QPen(Qt::darkGray, 1));
     addToGroup(icp);
 
-    QGraphicsSimpleTextItem *freq = new QGraphicsSimpleTextItem("2", this);
+    QGraphicsSimpleTextItem *freq = new QGraphicsSimpleTextItem("2", nullptr);
     freq->setFont(QFont("Arial", 18, QFont::Bold));
     freq->setBrush(QBrush(Qt::white));
     freq->setPos(-8, -22);
     addToGroup(freq);
 
-    QGraphicsSimpleTextItem *mhz = new QGraphicsSimpleTextItem("MHz", this);
+    QGraphicsSimpleTextItem *mhz = new QGraphicsSimpleTextItem("MHz", nullptr);
     mhz->setFont(QFont("Arial", 8));
     mhz->setBrush(QBrush(Qt::white));
     mhz->setPos(-15, 2);
     addToGroup(mhz);
 
-    QGraphicsSimpleTextItem *icpLabel = new QGraphicsSimpleTextItem("ICP", this);
+    QGraphicsSimpleTextItem *icpLabel = new QGraphicsSimpleTextItem("ICP", nullptr);
     icpLabel->setFont(QFont("Arial", 9));
     icpLabel->setBrush(QBrush(QColor(180, 180, 180)));
     icpLabel->setPos(-12, 20);
@@ -834,13 +834,13 @@ void PressureGaugeItem::updateAppearance()
     val->setPos(-22, -17);
     addToGroup(val);
 
-    QGraphicsSimpleTextItem *unit = new QGraphicsSimpleTextItem("mbar", this);
+    QGraphicsSimpleTextItem *unit = new QGraphicsSimpleTextItem("mbar", nullptr);
     unit->setFont(QFont("Arial", 7));
     unit->setBrush(QBrush(QColor(180, 180, 180)));
     unit->setPos(-12, 0);
     addToGroup(unit);
 
-    QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem("Pirani", this);
+    QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem("Pirani", nullptr);
     label->setFont(QFont("Arial", 8));
     label->setBrush(QBrush(Qt::black));
     label->setPos(-18, 25);
@@ -889,13 +889,13 @@ void ChuckItem::updateAppearance()
     temp->setPos(-18, -10);
     addToGroup(temp);
 
-    QGraphicsSimpleTextItem *unit = new QGraphicsSimpleTextItem("C", this);
+    QGraphicsSimpleTextItem *unit = new QGraphicsSimpleTextItem("C", nullptr);
     unit->setFont(QFont("Arial", 10));
     unit->setBrush(QBrush(Qt::white));
     unit->setPos(12, -8);
     addToGroup(unit);
 
-    QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem("Chuck", this);
+    QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem("Chuck", nullptr);
     label->setFont(QFont("Arial", 8));
     label->setBrush(QBrush(QColor(180, 180, 180)));
     label->setPos(-20, 15);
@@ -950,7 +950,7 @@ HardwareDiagram::HardwareDiagram(QWidget *parent)
     setContextMenuPolicy(Qt::CustomContextMenu);
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
-    m_scene->setSceneRect(0, 0, 1100, 750);
+    m_scene->setSceneRect(0, 0, 1100, 680);
     setupLayout();
 }
 
@@ -958,27 +958,45 @@ HardwareDiagram::~HardwareDiagram()
 {
 }
 
+// ==================== Pump Control Page - 参照原厂界面 ====================
 void HardwareDiagram::setupLayout()
 {
     m_scene->clear();
     m_components.clear();
 
+    // 布局常量
+    const int TOP_MENU_H = 40;          // 顶部菜单栏高度
+    const int CONTROL_BAR_H = 45;       // 控制按钮栏高度
+    const int MIMIC_START_Y = TOP_MENU_H + CONTROL_BAR_H; // 85
+    const int ROBOT_BANNER_H = 30;      // Robot状态栏高度
+    const int MIMIC_H = 320;            // Mimic区域高度
+    const int PANEL_H = 150;            // 底部面板高度
+    const int PANEL_Y = MIMIC_START_Y + ROBOT_BANNER_H + MIMIC_H + 10; // 545
+
     // ==================== 顶部菜单栏 ====================
-    QGraphicsRectItem *menuBar = new QGraphicsRectItem(0, 0, 1100, 45);
+    QGraphicsRectItem *menuBar = new QGraphicsRectItem(0, 0, 1100, TOP_MENU_H);
     menuBar->setBrush(QBrush(C_WIN_GRAY));
     menuBar->setPen(QPen(C_WIN_DARK, 1));
     menuBar->setZValue(0);
     m_scene->addItem(menuBar);
 
+    // 页面标题 "Pump control page"
+    QGraphicsSimpleTextItem *pageTitle = new QGraphicsSimpleTextItem("Pump control page");
+    pageTitle->setFont(QFont("Arial", 11, QFont::Bold));
+    pageTitle->setBrush(QBrush(Qt::black));
+    pageTitle->setPos(10, 14);
+    pageTitle->setZValue(10);
+    m_scene->addItem(pageTitle);
+
     // System 按钮
     m_systemBtn = new MenuButton("System");
-    m_systemBtn->setPos(5, 12);
+    m_systemBtn->setPos(180, 10);
     m_systemBtn->setZValue(10);
     m_scene->addItem(m_systemBtn);
 
     // System 下拉菜单
     m_systemMenu = new MenuPanel();
-    m_systemMenu->setPos(5, 24);
+    m_systemMenu->setPos(180, 22);
     m_systemMenu->addMenuItem("Pumping", 1, nullptr);
     m_systemMenu->addMenuItem("Venting", 2, nullptr);
     m_systemMenu->addMenuItem("Configuration", 3, nullptr);
@@ -988,15 +1006,15 @@ void HardwareDiagram::setupLayout()
     m_systemMenu->setVisible(false);
     m_scene->addItem(m_systemMenu);
 
-    // Process 按钮
+    // Process 按钮 (带紫色活动指示器)
     m_processBtn = new MenuButton("Process");
-    m_processBtn->setPos(110, 12);
+    m_processBtn->setPos(285, 10);
     m_processBtn->setZValue(10);
     m_scene->addItem(m_processBtn);
 
     // Process 下拉菜单
     m_processMenu = new MenuPanel();
-    m_processMenu->setPos(110, 24);
+    m_processMenu->setPos(285, 22);
     m_processMenu->addMenuItem("Start", 10, nullptr);
     m_processMenu->addMenuItem("Stop", 11, nullptr);
     m_processMenu->addMenuItem("Edit Recipe", 12, nullptr);
@@ -1008,13 +1026,13 @@ void HardwareDiagram::setupLayout()
 
     // Manager 按钮
     m_managerBtn = new MenuButton("Manager");
-    m_managerBtn->setPos(215, 12);
+    m_managerBtn->setPos(390, 10);
     m_managerBtn->setZValue(10);
     m_scene->addItem(m_managerBtn);
 
     // Manager 下拉菜单
     m_managerMenu = new MenuPanel();
-    m_managerMenu->setPos(215, 24);
+    m_managerMenu->setPos(390, 22);
     m_managerMenu->addMenuItem("Log on", 20, nullptr);
     m_managerMenu->addMenuItem("Log off", 21, nullptr);
     m_managerMenu->addMenuItem("Production Mode", 22, nullptr);
@@ -1023,520 +1041,800 @@ void HardwareDiagram::setupLayout()
     m_managerMenu->setVisible(false);
     m_scene->addItem(m_managerMenu);
 
+    // PUMP CONTROL 标签
+    QGraphicsSimpleTextItem *pumpLabel = new QGraphicsSimpleTextItem("PUMP CONTROL");
+    pumpLabel->setFont(QFont("Arial", 10, QFont::Bold));
+    pumpLabel->setBrush(QBrush(Qt::black));
+    pumpLabel->setPos(510, 14);
+    pumpLabel->setZValue(10);
+    m_scene->addItem(pumpLabel);
+
+    // LOG 圆形指示器
+    QGraphicsEllipseItem *logGauge = new QGraphicsEllipseItem(640, 8, 26, 26);
+    logGauge->setBrush(QBrush(C_WIN_GRAY));
+    logGauge->setPen(QPen(Qt::darkGray, 2));
+    logGauge->setZValue(10);
+    m_scene->addItem(logGauge);
+
+    QGraphicsSimpleTextItem *logLabel = new QGraphicsSimpleTextItem("LOG");
+    logLabel->setFont(QFont("Arial", 8));
+    logLabel->setBrush(QBrush(Qt::black));
+    logLabel->setPos(647, 17);
+    logLabel->setZValue(11);
+    m_scene->addItem(logLabel);
+
+    // 右侧 STOP ALL AUTO PROCESSES
+    QGraphicsRectItem *stopAllBtn = new QGraphicsRectItem(700, 8, 180, 28);
+    stopAllBtn->setBrush(QBrush(C_LED_GREEN));
+    stopAllBtn->setPen(QPen(Qt::darkGray, 1));
+    stopAllBtn->setZValue(10);
+    m_scene->addItem(stopAllBtn);
+
+    QGraphicsSimpleTextItem *stopAllText = new QGraphicsSimpleTextItem("STOP ALL AUTO PROCESSES");
+    stopAllText->setFont(QFont("Arial", 9, QFont::Bold));
+    stopAllText->setBrush(QBrush(Qt::white));
+    stopAllText->setPos(710, 14);
+    stopAllText->setZValue(11);
+    m_scene->addItem(stopAllText);
+
+    // STOP 六边形按钮
+    QGraphicsPolygonItem *stopHex = new QGraphicsPolygonItem();
+    QPolygonF hex;
+    hex << QPointF(920, 5) << QPointF(940, 15) << QPointF(940, 30) << QPointF(920, 40) << QPointF(900, 30) << QPointF(900, 15);
+    stopHex->setPolygon(hex);
+    stopHex->setBrush(QBrush(C_LED_RED));
+    stopHex->setPen(QPen(Qt::darkGray, 1));
+    stopHex->setZValue(10);
+    m_scene->addItem(stopHex);
+
+    QGraphicsSimpleTextItem *stopLabel = new QGraphicsSimpleTextItem("STOP");
+    stopLabel->setFont(QFont("Arial", 10, QFont::Bold));
+    stopLabel->setBrush(QBrush(Qt::white));
+    stopLabel->setPos(905, 18);
+    stopLabel->setZValue(11);
+    m_scene->addItem(stopLabel);
+
     // 设置菜单按钮回调
     m_systemBtn->setCallback([this]() { onSystemMenuToggle(); });
     m_processBtn->setCallback([this]() { onProcessMenuToggle(); });
     m_managerBtn->setCallback([this]() { onManagerMenuToggle(); });
 
-    // PUMP CONTROL
-    QGraphicsSimpleTextItem *pumpLabel = new QGraphicsSimpleTextItem("PUMP CONTROL");
-    pumpLabel->setFont(QFont("Arial", 9));
-    pumpLabel->setBrush(QBrush(Qt::black));
-    pumpLabel->setPos(320, 16);
-    pumpLabel->setZValue(10);
-    m_scene->addItem(pumpLabel);
-
-    // 右侧 RED ALERT
-    QGraphicsRectItem *alertBar = new QGraphicsRectItem(850, 5, 240, 35);
-    alertBar->setBrush(QBrush(C_LED_RED));
-    alertBar->setPen(QPen(Qt::darkGray, 1));
-    alertBar->setZValue(10);
-    m_scene->addItem(alertBar);
-
-    QGraphicsSimpleTextItem *alertText = new QGraphicsSimpleTextItem("RED ALERT");
-    alertText->setFont(QFont("Arial", 14, QFont::Bold));
-    alertText->setBrush(QBrush(Qt::white));
-    alertText->setPos(920, 13);
-    alertText->setZValue(11);
-    m_scene->addItem(alertText);
-
-    // STOP ALL AUTO PROCESSES
-    QGraphicsRectItem *stopBtn = new QGraphicsRectItem(700, 8, 140, 30);
-    stopBtn->setBrush(QBrush(C_LED_GREEN));
-    stopBtn->setPen(QPen(Qt::darkGray, 1));
-    stopBtn->setZValue(10);
-    m_scene->addItem(stopBtn);
-
-    QGraphicsSimpleTextItem *stopText = new QGraphicsSimpleTextItem("STOP ALL AUTO PROCESSES");
-    stopText->setFont(QFont("Arial", 9, QFont::Bold));
-    stopText->setBrush(QBrush(Qt::white));
-    stopText->setPos(712, 18);
-    stopText->setZValue(11);
-    m_scene->addItem(stopText);
-
-    // ==================== 状态栏 ====================
-    QGraphicsRectItem *statusBar = new QGraphicsRectItem(0, 45, 1100, 28);
-    statusBar->setBrush(QBrush(C_WIN_LIGHT));
-    statusBar->setPen(QPen(Qt::darkGray, 1));
-    statusBar->setZValue(0);
-    m_scene->addItem(statusBar);
+    // ==================== Robot Arm 状态栏 ====================
+    QGraphicsRectItem *robotBanner = new QGraphicsRectItem(0, MIMIC_START_Y, 1100, ROBOT_BANNER_H);
+    robotBanner->setBrush(QBrush(C_TITLE_BLUE));
+    robotBanner->setPen(QPen(C_WIN_DARK, 1));
+    robotBanner->setZValue(0);
+    m_scene->addItem(robotBanner);
 
     QGraphicsSimpleTextItem *robotStatus = new QGraphicsSimpleTextItem("Robot arm standing by");
-    robotStatus->setFont(QFont("Arial", 9));
-    robotStatus->setBrush(QBrush(Qt::black));
-    robotStatus->setPos(10, 54);
+    robotStatus->setFont(QFont("Arial", 10));
+    robotStatus->setBrush(QBrush(Qt::white));
+    robotStatus->setPos(10, MIMIC_START_Y + 8);
     robotStatus->setZValue(10);
     m_scene->addItem(robotStatus);
 
-    // ==================== Mimic 区域 ====================
-    QGraphicsRectItem *mimicBg = new QGraphicsRectItem(0, 73, 800, 450);
+    // ==================== Mimic 背景 ====================
+    QGraphicsRectItem *mimicBg = new QGraphicsRectItem(0, MIMIC_START_Y + ROBOT_BANNER_H, 1100, MIMIC_H);
     mimicBg->setBrush(QBrush(C_MENU_BG));
     mimicBg->setPen(QPen(Qt::darkGray, 1));
     mimicBg->setZValue(0);
     m_scene->addItem(mimicBg);
 
-    // Mimic 区域标题
-    QGraphicsSimpleTextItem *mimicTitle = new QGraphicsSimpleTextItem("MIMIC DIAGRAM");
-    mimicTitle->setFont(QFont("Arial", 10, QFont::Bold));
-    mimicTitle->setBrush(QBrush(Qt::black));
-    mimicTitle->setPos(10, 80);
-    mimicTitle->setZValue(5);
-    m_scene->addItem(mimicTitle);
+    // Mimic 内部布局常量
+    const int INNER_Y = MIMIC_START_Y + ROBOT_BANNER_H + 10;
+    const int CHAMBER_CX = 500;   // 主腔室中心X
+    const int CHAMBER_CY = INNER_Y + 160;  // 主腔室中心Y
 
     // ==================== 绘制管道 ====================
     QPen pipePen(C_PIPE_BLACK, 4);
 
-    // 主管道 - 腔室到泵
-    addPipeLine(550, 330, 550, 420, pipePen);
-    addPipeLine(550, 420, 200, 420, pipePen);
-    addPipeLine(200, 420, 200, 450, pipePen);
+    // 主腔室到机械泵 (MP)
+    addPipeLine(CHAMBER_CX, CHAMBER_CY + 60, CHAMBER_CX, CHAMBER_CY + 100, pipePen);
+    addPipeLine(CHAMBER_CX, CHAMBER_CY + 100, 150, CHAMBER_CY + 100, pipePen);
+    addPipeLine(150, CHAMBER_CY + 100, 150, INNER_Y + 290, pipePen);
 
-    // 腔室到 RF
-    addPipeLine(500, 280, 350, 280, pipePen);
+    // 主腔室到分子泵 (TP)
+    addPipeLine(CHAMBER_CX + 50, CHAMBER_CY + 60, CHAMBER_CX + 50, CHAMBER_CY + 100, pipePen);
+    addPipeLine(CHAMBER_CX + 50, CHAMBER_CY + 100, 850, CHAMBER_CY + 100, pipePen);
+    addPipeLine(850, CHAMBER_CY + 100, 850, INNER_Y + 290, pipePen);
 
-    // 腔室到 ICP
-    addPipeLine(550, 230, 550, 180, pipePen);
+    // Load-Lock 到 MP
+    addPipeLine(200, INNER_Y + 80, 200, INNER_Y + 120, pipePen);
+    addPipeLine(200, INNER_Y + 120, 150, INNER_Y + 120, pipePen);
+    addPipeLine(150, INNER_Y + 120, 150, INNER_Y + 180, pipePen);
+
+    // Load-Lock 门阀连接
+    addPipeLine(280, INNER_Y + 80, CHAMBER_CX - 80, INNER_Y + 80, pipePen);
+    addPipeLine(CHAMBER_CX - 80, INNER_Y + 80, CHAMBER_CX - 80, CHAMBER_CY - 60, pipePen);
+
+    // RF 管道
+    addPipeLine(CHAMBER_CX - 80, CHAMBER_CY, 320, CHAMBER_CY, pipePen);
+
+    // ICP 管道
+    addPipeLine(CHAMBER_CX, CHAMBER_CY - 80, CHAMBER_CX, INNER_Y + 50, pipePen);
 
     // 压力计连接
-    addPipeLine(600, 280, 750, 280, pipePen);
+    addPipeLine(CHAMBER_CX + 80, CHAMBER_CY, 950, CHAMBER_CY, pipePen);
 
     // 气体管道
-    addPipeLine(100, 250, 100, 350, pipePen);
-    addPipeLine(100, 350, 500, 350, pipePen);
-    addPipeLine(500, 350, 500, 300, pipePen);
+    addPipeLine(80, CHAMBER_CY - 40, 80, CHAMBER_CY + 40, pipePen);
+    addPipeLine(80, CHAMBER_CY + 40, CHAMBER_CX - 40, CHAMBER_CY + 40, pipePen);
+    addPipeLine(CHAMBER_CX - 40, CHAMBER_CY + 40, CHAMBER_CX - 40, CHAMBER_CY + 10, pipePen);
 
-    // 分子泵连接
-    addPipeLine(600, 330, 700, 330, pipePen);
-    addPipeLine(700, 330, 700, 420, pipePen);
-    addPipeLine(700, 420, 850, 420, pipePen);
+    // ==================== Load-Lock 区域 (左侧) ====================
+    // Load-Lock 腔室 (较小)
+    QGraphicsEllipseItem *loadLockOuter = new QGraphicsEllipseItem(160, INNER_Y + 30, 80, 80);
+    loadLockOuter->setBrush(QBrush(C_CHAMBER_OUTER));
+    loadLockOuter->setPen(QPen(Qt::darkGray, 2));
+    loadLockOuter->setZValue(5);
+    m_scene->addItem(loadLockOuter);
 
-    // ==================== 组件 ====================
+    QGraphicsEllipseItem *loadLockInner = new QGraphicsEllipseItem(170, INNER_Y + 40, 60, 60);
+    loadLockInner->setBrush(QBrush(C_CHAMBER_INNER));
+    loadLockInner->setPen(Qt::NoPen);
+    loadLockInner->setZValue(5);
+    m_scene->addItem(loadLockInner);
 
+    QGraphicsSimpleTextItem *llLabel = new QGraphicsSimpleTextItem("Load Lock", nullptr);
+    llLabel->setFont(QFont("Arial", 8));
+    llLabel->setBrush(QBrush(Qt::black));
+    llLabel->setPos(175, INNER_Y + 60);
+    llLabel->setZValue(6);
+    m_scene->addItem(llLabel);
+
+    // Load-Lock 阀门 V_LL
+    ValveItem *vLL = new ValveItem("V_LL");
+    vLL->setPos(200, INNER_Y + 120);
+    vLL->setOpen(false);
+    vLL->setZValue(5);
+    m_scene->addItem(vLL);
+    m_components["V_LL"] = vLL;
+
+    // ==================== 主腔室 (中部) ====================
     ChamberItem *chamber = new ChamberItem("Chamber");
-    chamber->setPos(550, 280);
+    chamber->setPos(CHAMBER_CX, CHAMBER_CY);
     chamber->setState(ComponentState::Normal);
     chamber->setZValue(5);
     m_scene->addItem(chamber);
     m_components["Chamber"] = chamber;
 
-    RFGeneratorItem *rf = new RFGeneratorItem("RF Generator");
-    rf->setPos(320, 280);
-    rf->setState(ComponentState::Normal);
-    rf->setZValue(5);
-    m_scene->addItem(rf);
-    m_components["RF"] = rf;
-
-    ICPGeneratorItem *icp = new ICPGeneratorItem("ICP Source");
-    icp->setPos(550, 150);
-    icp->setState(ComponentState::Normal);
-    icp->setZValue(5);
-    m_scene->addItem(icp);
-    m_components["ICP"] = icp;
-
-    PressureGaugeItem *pressure = new PressureGaugeItem("Pressure");
-    pressure->setPos(780, 280);
-    pressure->setState(ComponentState::Normal);
-    pressure->setZValue(5);
-    m_scene->addItem(pressure);
-    m_components["Pressure"] = pressure;
-
-    PumpItem *mp = new PumpItem("MP");
-    mp->setPos(200, 470);
-    mp->setState(ComponentState::Normal);
-    mp->setZValue(5);
-    m_scene->addItem(mp);
-    m_components["MP"] = mp;
-
-    PumpItem *tp = new PumpItem("TP");
-    tp->setPos(850, 470);
-    tp->setState(ComponentState::Normal);
-    tp->setZValue(5);
-    m_scene->addItem(tp);
-    m_components["TP"] = tp;
-
+    // Chuck (样品架)
     ChuckItem *chuck = new ChuckItem("Chuck");
-    chuck->setPos(550, 400);
+    chuck->setPos(CHAMBER_CX, CHAMBER_CY + 90);
     chuck->setState(ComponentState::Normal);
     chuck->setZValue(5);
     m_scene->addItem(chuck);
     m_components["Chuck"] = chuck;
 
-    // 气体 MFC
+    // ==================== RF 发生器 (左侧) ====================
+    RFGeneratorItem *rf = new RFGeneratorItem("RF Generator");
+    rf->setPos(290, CHAMBER_CY);
+    rf->setState(ComponentState::Normal);
+    rf->setZValue(5);
+    m_scene->addItem(rf);
+    m_components["RF"] = rf;
+
+    // ==================== ICP 源 (上方) ====================
+    ICPGeneratorItem *icp = new ICPGeneratorItem("ICP Source");
+    icp->setPos(CHAMBER_CX, INNER_Y + 30);
+    icp->setState(ComponentState::Normal);
+    icp->setZValue(5);
+    m_scene->addItem(icp);
+    m_components["ICP"] = icp;
+
+    // ==================== 气体 MFC (最左侧) ====================
     QStringList gases = {"Ar", "O2", "N2", "CF4"};
     for (int i = 0; i < 4; i++) {
         GasMFCItem *mfc = new GasMFCItem(gases[i], i+1);
-        mfc->setPos(70, 180 + i * 50);
+        mfc->setPos(60, INNER_Y + 80 + i * 55);
         mfc->setState(ComponentState::Normal);
         mfc->setZValue(5);
         m_scene->addItem(mfc);
         m_components[gases[i]] = mfc;
     }
 
-    // 阀门
-    ValveItem *v1 = new ValveItem("V1");
-    v1->setPos(550, 370);
+    // 气体入口阀门 V_GAS
+    ValveItem *vGas = new ValveItem("V_GAS");
+    vGas->setPos(80, CHAMBER_CY);
+    vGas->setOpen(false);
+    vGas->setZValue(5);
+    m_scene->addItem(vGas);
+    m_components["V_GAS"] = vGas;
+
+    // ==================== 泵 (底部) ====================
+    // MP 机械泵
+    PumpItem *mp = new PumpItem("MP");
+    mp->setPos(150, INNER_Y + 300);
+    mp->setState(ComponentState::Normal);
+    mp->setZValue(5);
+    m_scene->addItem(mp);
+    m_components["MP"] = mp;
+
+    // TP 分子泵
+    PumpItem *tp = new PumpItem("TP");
+    tp->setPos(850, INNER_Y + 300);
+    tp->setState(ComponentState::Normal);
+    tp->setZValue(5);
+    m_scene->addItem(tp);
+    m_components["TP"] = tp;
+
+    // ==================== 阀门 (主管道上) ====================
+    ValveItem *v1 = new ValveItem("V1");  // 主腔室到MP
+    v1->setPos(CHAMBER_CX, CHAMBER_CY + 80);
     v1->setOpen(false);
     v1->setZValue(5);
     m_scene->addItem(v1);
     m_components["V1"] = v1;
 
-    ValveItem *v2 = new ValveItem("V2");
-    v2->setPos(470, 280);
+    ValveItem *v2 = new ValveItem("V2");  // 主腔室到TP
+    v2->setPos(CHAMBER_CX + 50, CHAMBER_CY + 80);
     v2->setOpen(false);
     v2->setZValue(5);
     m_scene->addItem(v2);
     m_components["V2"] = v2;
 
-    ValveItem *v3 = new ValveItem("V3");
-    v3->setPos(630, 280);
-    v3->setOpen(false);
-    v3->setZValue(5);
-    m_scene->addItem(v3);
-    m_components["V3"] = v3;
+    // ==================== 压力计 (右侧) ====================
+    PressureGaugeItem *pressure = new PressureGaugeItem("Pressure");
+    pressure->setPos(980, CHAMBER_CY);
+    pressure->setState(ComponentState::Normal);
+    pressure->setZValue(5);
+    m_scene->addItem(pressure);
+    m_components["Pressure"] = pressure;
 
-    ValveItem *v4 = new ValveItem("V4");
-    v4->setPos(200, 390);
-    v4->setOpen(false);
-    v4->setZValue(5);
-    m_scene->addItem(v4);
-    m_components["V4"] = v4;
+    // Pirani 规
+    PressureGaugeItem *pirani = new PressureGaugeItem("Pirani");
+    pirani->setPos(980, INNER_Y + 100);
+    pirani->setState(ComponentState::Normal);
+    pirani->setZValue(5);
+    m_scene->addItem(pirani);
+    m_components["Pirani"] = pirani;
 
-    ValveItem *v5 = new ValveItem("V5");
-    v5->setPos(700, 370);
-    v5->setOpen(false);
-    v5->setZValue(5);
-    m_scene->addItem(v5);
-    m_components["V5"] = v5;
+    // ==================== 状态面板 (右侧中部) ====================
+    const int STATUS_PANEL_X = 1000;
+    const int STATUS_PANEL_Y = INNER_Y + 10;
+    const int STATUS_PANEL_W = 90;
+    const int STATUS_PANEL_H = 120;
 
-    ValveItem *v6 = new ValveItem("V6");
-    v6->setPos(100, 300);
-    v6->setOpen(false);
-    v6->setZValue(5);
-    m_scene->addItem(v6);
-    m_components["V6"] = v6;
-
-    // ==================== 右侧状态面板 ====================
-    QGraphicsRectItem *statusPanel = new QGraphicsRectItem(800, 73, 300, 250);
+    QGraphicsRectItem *statusPanel = new QGraphicsRectItem(STATUS_PANEL_X, STATUS_PANEL_Y, STATUS_PANEL_W, STATUS_PANEL_H);
     statusPanel->setBrush(QBrush(C_WIN_GRAY));
     statusPanel->setPen(QPen(Qt::darkGray, 1));
     statusPanel->setZValue(0);
     m_scene->addItem(statusPanel);
 
-    QGraphicsSimpleTextItem *statusTitle = new QGraphicsSimpleTextItem("STATUS");
-    statusTitle->setFont(QFont("Arial", 11, QFont::Bold));
-    statusTitle->setBrush(QBrush(Qt::black));
-    statusTitle->setPos(815, 85);
-    statusTitle->setZValue(10);
-    m_scene->addItem(statusTitle);
+    // Turbo Pump Status
+    QGraphicsSimpleTextItem *turboLabel = new QGraphicsSimpleTextItem("Turbo", nullptr);
+    turboLabel->setFont(QFont("Arial", 8));
+    turboLabel->setBrush(QBrush(Qt::black));
+    turboLabel->setPos(STATUS_PANEL_X + 5, STATUS_PANEL_Y + 5);
+    turboLabel->setZValue(10);
+    m_scene->addItem(turboLabel);
 
-    // Process
-    QGraphicsSimpleTextItem *procLabel = new QGraphicsSimpleTextItem("Process:");
-    procLabel->setFont(QFont("Arial", 9));
-    procLabel->setBrush(QBrush(Qt::black));
-    procLabel->setPos(815, 115);
-    procLabel->setZValue(10);
-    m_scene->addItem(procLabel);
+    LEDIndicator *turboLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN_DARK);
+    turboLed->setPos(STATUS_PANEL_X + 5, STATUS_PANEL_Y + 25);
+    turboLed->setZValue(10);
+    m_scene->addItem(turboLed);
 
-    LEDIndicator *procLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN_DARK);
-    procLed->setPos(890, 110);
-    procLed->setZValue(10);
-    m_scene->addItem(procLed);
+    QGraphicsSimpleTextItem *atSpeedLabel = new QGraphicsSimpleTextItem("at speed", nullptr);
+    atSpeedLabel->setFont(QFont("Arial", 8));
+    atSpeedLabel->setBrush(QBrush(C_LED_GREEN));
+    atSpeedLabel->setPos(STATUS_PANEL_X + 20, STATUS_PANEL_Y + 28);
+    atSpeedLabel->setZValue(10);
+    m_scene->addItem(atSpeedLabel);
 
-    QGraphicsSimpleTextItem *procStat = new QGraphicsSimpleTextItem("READY");
-    procStat->setFont(QFont("Arial", 9, QFont::Bold));
-    procStat->setBrush(QBrush(C_LED_GREEN));
-    procStat->setPos(905, 115);
-    procStat->setZValue(10);
-    m_scene->addItem(procStat);
+    // N2 Flow Rate
+    QGraphicsSimpleTextItem *n2Label = new QGraphicsSimpleTextItem("N2:", nullptr);
+    n2Label->setFont(QFont("Arial", 8));
+    n2Label->setBrush(QBrush(Qt::black));
+    n2Label->setPos(STATUS_PANEL_X + 5, STATUS_PANEL_Y + 55);
+    n2Label->setZValue(10);
+    m_scene->addItem(n2Label);
 
-    // RF
-    QGraphicsSimpleTextItem *rfLabel = new QGraphicsSimpleTextItem("RF:");
-    rfLabel->setFont(QFont("Arial", 9));
-    rfLabel->setBrush(QBrush(Qt::black));
-    rfLabel->setPos(815, 150);
-    rfLabel->setZValue(10);
-    m_scene->addItem(rfLabel);
+    QGraphicsRectItem *n2Box = new QGraphicsRectItem(STATUS_PANEL_X + 5, STATUS_PANEL_Y + 72, 80, 18);
+    n2Box->setBrush(QBrush(Qt::black));
+    n2Box->setPen(Qt::NoPen);
+    n2Box->setZValue(10);
+    m_scene->addItem(n2Box);
 
-    LEDIndicator *rfLed = new LEDIndicator(false, C_LED_GREEN, C_LED_GREEN_DARK);
-    rfLed->setPos(850, 145);
-    rfLed->setZValue(10);
-    m_scene->addItem(rfLed);
+    QGraphicsSimpleTextItem *n2Value = new QGraphicsSimpleTextItem("0.0 sccm", nullptr);
+    n2Value->setFont(QFont("Courier New", 9));
+    n2Value->setBrush(QBrush(C_LED_GREEN));
+    n2Value->setPos(STATUS_PANEL_X + 10, STATUS_PANEL_Y + 75);
+    n2Value->setZValue(11);
+    m_scene->addItem(n2Value);
 
-    QGraphicsSimpleTextItem *rfStat = new QGraphicsSimpleTextItem("OFF");
-    rfStat->setFont(QFont("Arial", 9, QFont::Bold));
-    rfStat->setBrush(QBrush(C_LED_GREEN_DARK));
-    rfStat->setPos(865, 150);
-    rfStat->setZValue(10);
-    m_scene->addItem(rfStat);
+    // Set Base Pressure 按钮
+    InteractiveButton *setBaseBtn = new InteractiveButton("Set Base");
+    setBaseBtn->setPos(STATUS_PANEL_X + 5, STATUS_PANEL_Y + 95);
+    setBaseBtn->setZValue(10);
+    m_scene->addItem(setBaseBtn);
 
-    // ICP
-    QGraphicsSimpleTextItem *icpLabel = new QGraphicsSimpleTextItem("ICP:");
-    icpLabel->setFont(QFont("Arial", 9));
-    icpLabel->setBrush(QBrush(Qt::black));
-    icpLabel->setPos(815, 185);
-    icpLabel->setZValue(10);
-    m_scene->addItem(icpLabel);
+    // ==================== 左侧状态面板 (Robot Arm Status) ====================
+    const int ARM_PANEL_X = 10;
+    const int ARM_PANEL_Y = INNER_Y + 10;
+    const int ARM_PANEL_W = 130;
+    const int ARM_PANEL_H = 100;
 
-    LEDIndicator *icpLed = new LEDIndicator(false, C_LED_GREEN, C_LED_GREEN_DARK);
-    icpLed->setPos(850, 180);
-    icpLed->setZValue(10);
-    m_scene->addItem(icpLed);
+    QGraphicsRectItem *armPanel = new QGraphicsRectItem(ARM_PANEL_X, ARM_PANEL_Y, ARM_PANEL_W, ARM_PANEL_H);
+    armPanel->setBrush(QBrush(C_WIN_GRAY));
+    armPanel->setPen(QPen(Qt::darkGray, 1));
+    armPanel->setZValue(0);
+    m_scene->addItem(armPanel);
 
-    QGraphicsSimpleTextItem *icpStat = new QGraphicsSimpleTextItem("OFF");
-    icpStat->setFont(QFont("Arial", 9, QFont::Bold));
-    icpStat->setBrush(QBrush(C_LED_GREEN_DARK));
-    icpStat->setPos(865, 185);
-    icpStat->setZValue(10);
-    m_scene->addItem(icpStat);
+    QGraphicsSimpleTextItem *armTitle = new QGraphicsSimpleTextItem("Robot Arm", nullptr);
+    armTitle->setFont(QFont("Arial", 9, QFont::Bold));
+    armTitle->setBrush(QBrush(Qt::black));
+    armTitle->setPos(ARM_PANEL_X + 5, ARM_PANEL_Y + 5);
+    armTitle->setZValue(10);
+    m_scene->addItem(armTitle);
 
-    // Water
-    QGraphicsSimpleTextItem *waterLabel = new QGraphicsSimpleTextItem("Water:");
-    waterLabel->setFont(QFont("Arial", 9));
-    waterLabel->setBrush(QBrush(Qt::black));
-    waterLabel->setPos(815, 220);
-    waterLabel->setZValue(10);
-    m_scene->addItem(waterLabel);
+    // ARM HOME (绿色)
+    LEDIndicator *armHomeLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN_DARK);
+    armHomeLed->setPos(ARM_PANEL_X + 5, ARM_PANEL_Y + 28);
+    armHomeLed->setZValue(10);
+    m_scene->addItem(armHomeLed);
+    QGraphicsSimpleTextItem *armHomeLbl = new QGraphicsSimpleTextItem("ARM HOME", nullptr);
+    armHomeLbl->setFont(QFont("Arial", 8));
+    armHomeLbl->setBrush(QBrush(Qt::black));
+    armHomeLbl->setPos(ARM_PANEL_X + 20, ARM_PANEL_Y + 30);
+    armHomeLbl->setZValue(10);
+    m_scene->addItem(armHomeLbl);
 
-    QGraphicsRectItem *waterOffBg = new QGraphicsRectItem(880, 217, 90, 22);
-    waterOffBg->setBrush(QBrush(C_LED_RED));
-    waterOffBg->setPen(Qt::NoPen);
-    waterOffBg->setZValue(10);
-    m_scene->addItem(waterOffBg);
+    // ARM EXTENDED (黑色/关闭)
+    LEDIndicator *armExtLed = new LEDIndicator(false, C_LED_GREEN, C_WIN_DARK);
+    armExtLed->setPos(ARM_PANEL_X + 5, ARM_PANEL_Y + 48);
+    armExtLed->setZValue(10);
+    m_scene->addItem(armExtLed);
+    QGraphicsSimpleTextItem *armExtLbl = new QGraphicsSimpleTextItem("ARM EXTENDED", nullptr);
+    armExtLbl->setFont(QFont("Arial", 8));
+    armExtLbl->setBrush(QBrush(Qt::black));
+    armExtLbl->setPos(ARM_PANEL_X + 20, ARM_PANEL_Y + 50);
+    armExtLbl->setZValue(10);
+    m_scene->addItem(armExtLbl);
 
-    QGraphicsSimpleTextItem *waterOff = new QGraphicsSimpleTextItem("Water Off");
-    waterOff->setFont(QFont("Arial", 9, QFont::Bold));
-    waterOff->setBrush(QBrush(Qt::white));
-    waterOff->setPos(890, 222);
-    waterOff->setZValue(11);
-    m_scene->addItem(waterOff);
+    // ARM FAULT (黑色/关闭)
+    LEDIndicator *armFaultLed = new LEDIndicator(false, C_LED_RED, C_WIN_DARK);
+    armFaultLed->setPos(ARM_PANEL_X + 5, ARM_PANEL_Y + 68);
+    armFaultLed->setZValue(10);
+    m_scene->addItem(armFaultLed);
+    QGraphicsSimpleTextItem *armFaultLbl = new QGraphicsSimpleTextItem("ARM FAULT", nullptr);
+    armFaultLbl->setFont(QFont("Arial", 8));
+    armFaultLbl->setBrush(QBrush(Qt::black));
+    armFaultLbl->setPos(ARM_PANEL_X + 20, ARM_PANEL_Y + 70);
+    armFaultLbl->setZValue(10);
+    m_scene->addItem(armFaultLbl);
 
-    // Pressure
-    QGraphicsSimpleTextItem *presLabel = new QGraphicsSimpleTextItem("Pressure:");
-    presLabel->setFont(QFont("Arial", 9));
-    presLabel->setBrush(QBrush(Qt::black));
-    presLabel->setPos(815, 255);
-    presLabel->setZValue(10);
-    m_scene->addItem(presLabel);
+    // WAFER LIFT / WAFER CLAMP
+    QGraphicsSimpleTextItem *waferLiftLbl = new QGraphicsSimpleTextItem("WAFER LIFT DOWN", nullptr);
+    waferLiftLbl->setFont(QFont("Arial", 7));
+    waferLiftLbl->setBrush(QBrush(Qt::black));
+    waferLiftLbl->setPos(ARM_PANEL_X + 5, ARM_PANEL_Y + 88);
+    waferLiftLbl->setZValue(10);
+    m_scene->addItem(waferLiftLbl);
 
-    QGraphicsRectItem *presBg = new QGraphicsRectItem(880, 252, 90, 22);
-    presBg->setBrush(QBrush(Qt::black));
-    presBg->setPen(Qt::NoPen);
-    presBg->setZValue(10);
-    m_scene->addItem(presBg);
+    // ==================== 底部面板 - Load-Lock 区域 (左侧) ====================
+    QGraphicsRectItem *llPanel = new QGraphicsRectItem(10, PANEL_Y, 340, PANEL_H);
+    llPanel->setBrush(QBrush(C_WIN_GRAY));
+    llPanel->setPen(QPen(Qt::darkGray, 1));
+    llPanel->setZValue(0);
+    m_scene->addItem(llPanel);
 
-    QGraphicsSimpleTextItem *presValue = new QGraphicsSimpleTextItem("8.6E-4");
-    presValue->setFont(QFont("Courier New", 10));
-    presValue->setBrush(QBrush(C_LED_GREEN));
-    presValue->setPos(890, 257);
-    presValue->setZValue(11);
-    m_scene->addItem(presValue);
+    QGraphicsSimpleTextItem *llPanelTitle = new QGraphicsSimpleTextItem("Load-Lock Area", nullptr);
+    llPanelTitle->setFont(QFont("Arial", 10, QFont::Bold));
+    llPanelTitle->setBrush(QBrush(Qt::black));
+    llPanelTitle->setPos(20, PANEL_Y + 10);
+    llPanelTitle->setZValue(10);
+    m_scene->addItem(llPanelTitle);
 
-    // ==================== 底部控制按钮 ====================
-    InteractiveButton *evacBtn = new InteractiveButton("EVACUATE");
-    evacBtn->setPos(810, 100);
-    evacBtn->setZValue(10);
-    evacBtn->setCallback([this]() { onEvacuateClicked(); });
-    m_scene->addItem(evacBtn);
+    // Status
+    QGraphicsSimpleTextItem *llStatusLbl = new QGraphicsSimpleTextItem("Status:", nullptr);
+    llStatusLbl->setFont(QFont("Arial", 9));
+    llStatusLbl->setBrush(QBrush(Qt::black));
+    llStatusLbl->setPos(20, PANEL_Y + 35);
+    llStatusLbl->setZValue(10);
+    m_scene->addItem(llStatusLbl);
 
-    InteractiveButton *stop2Btn = new InteractiveButton("STOP");
-    stop2Btn->setPos(810, 140);
-    stop2Btn->setZValue(10);
-    stop2Btn->setCallback([this]() { onStopClicked(); });
-    m_scene->addItem(stop2Btn);
-
-    InteractiveButton *ventBtn = new InteractiveButton("VENT");
-    ventBtn->setPos(810, 180);
-    ventBtn->setZValue(10);
-    ventBtn->setCallback([this]() { onVentClicked(); });
-    m_scene->addItem(ventBtn);
-
-    // ==================== 底部状态面板 ====================
-    QGraphicsRectItem *panel1 = new QGraphicsRectItem(10, 530, 380, 150);
-    panel1->setBrush(QBrush(C_WIN_GRAY));
-    panel1->setPen(QPen(Qt::darkGray, 1));
-    panel1->setZValue(0);
-    m_scene->addItem(panel1);
-
-    QGraphicsSimpleTextItem *panel1Title = new QGraphicsSimpleTextItem("System power up lid down");
-    panel1Title->setFont(QFont("Arial", 10, QFont::Bold));
-    panel1Title->setBrush(QBrush(Qt::black));
-    panel1Title->setPos(20, 540);
-    panel1Title->setZValue(10);
-    m_scene->addItem(panel1Title);
+    QGraphicsSimpleTextItem *llStatusValue = new QGraphicsSimpleTextItem("Stopped Pumping/Venting", nullptr);
+    llStatusValue->setFont(QFont("Arial", 9, QFont::Bold));
+    llStatusValue->setBrush(QBrush(C_LED_GREEN));
+    llStatusValue->setPos(70, PANEL_Y + 35);
+    llStatusValue->setZValue(10);
+    m_scene->addItem(llStatusValue);
 
     // Lid
-    QGraphicsSimpleTextItem *lidLabel = new QGraphicsSimpleTextItem("Lid:");
-    lidLabel->setFont(QFont("Arial", 9));
-    lidLabel->setBrush(QBrush(Qt::black));
-    lidLabel->setPos(20, 570);
-    lidLabel->setZValue(10);
-    m_scene->addItem(lidLabel);
+    QGraphicsSimpleTextItem *llLidLbl = new QGraphicsSimpleTextItem("Lid:", nullptr);
+    llLidLbl->setFont(QFont("Arial", 9));
+    llLidLbl->setBrush(QBrush(Qt::black));
+    llLidLbl->setPos(20, PANEL_Y + 60);
+    llLidLbl->setZValue(10);
+    m_scene->addItem(llLidLbl);
 
-    QGraphicsRectItem *lidBox = new QGraphicsRectItem(55, 567, 80, 20);
-    lidBox->setBrush(QBrush(C_WIN_LIGHT));
-    lidBox->setPen(QPen(Qt::darkGray, 1));
-    lidBox->setZValue(10);
-    m_scene->addItem(lidBox);
+    QGraphicsRectItem *llLidBox = new QGraphicsRectItem(60, PANEL_Y + 57, 100, 20);
+    llLidBox->setBrush(QBrush(C_WIN_LIGHT));
+    llLidBox->setPen(QPen(Qt::darkGray, 1));
+    llLidBox->setZValue(10);
+    m_scene->addItem(llLidBox);
 
-    QGraphicsSimpleTextItem *lidValue = new QGraphicsSimpleTextItem("OPEN");
-    lidValue->setFont(QFont("Arial", 9));
-    lidValue->setBrush(QBrush(Qt::black));
-    lidValue->setPos(70, 570);
-    lidValue->setZValue(11);
-    m_scene->addItem(lidValue);
+    QGraphicsSimpleTextItem *llLidValue = new QGraphicsSimpleTextItem("CLOSED", nullptr);
+    llLidValue->setFont(QFont("Arial", 9));
+    llLidValue->setBrush(QBrush(Qt::black));
+    llLidValue->setPos(85, PANEL_Y + 60);
+    llLidValue->setZValue(11);
+    m_scene->addItem(llLidValue);
 
     // Pirani
-    QGraphicsSimpleTextItem *piraniLabel = new QGraphicsSimpleTextItem("Pirani:");
-    piraniLabel->setFont(QFont("Arial", 9));
-    piraniLabel->setBrush(QBrush(Qt::black));
-    piraniLabel->setPos(20, 600);
-    piraniLabel->setZValue(10);
-    m_scene->addItem(piraniLabel);
+    QGraphicsSimpleTextItem *llPiraniLbl = new QGraphicsSimpleTextItem("Pirani:", nullptr);
+    llPiraniLbl->setFont(QFont("Arial", 9));
+    llPiraniLbl->setBrush(QBrush(Qt::black));
+    llPiraniLbl->setPos(20, PANEL_Y + 88);
+    llPiraniLbl->setZValue(10);
+    m_scene->addItem(llPiraniLbl);
 
-    QGraphicsRectItem *piraniBox = new QGraphicsRectItem(65, 597, 90, 20);
-    piraniBox->setBrush(QBrush(Qt::black));
-    piraniBox->setPen(Qt::NoPen);
-    piraniBox->setZValue(10);
-    m_scene->addItem(piraniBox);
+    QGraphicsRectItem *llPiraniBox = new QGraphicsRectItem(70, PANEL_Y + 85, 110, 20);
+    llPiraniBox->setBrush(QBrush(Qt::black));
+    llPiraniBox->setPen(Qt::NoPen);
+    llPiraniBox->setZValue(10);
+    m_scene->addItem(llPiraniBox);
 
-    QGraphicsSimpleTextItem *piraniValue = new QGraphicsSimpleTextItem("8.6E-4 mbar");
-    piraniValue->setFont(QFont("Courier New", 9));
-    piraniValue->setBrush(QBrush(C_LED_GREEN));
-    piraniValue->setPos(70, 600);
-    piraniValue->setZValue(11);
-    m_scene->addItem(piraniValue);
+    QGraphicsSimpleTextItem *llPiraniValue = new QGraphicsSimpleTextItem("6.19e-05 Torr", nullptr);
+    llPiraniValue->setFont(QFont("Courier New", 9));
+    llPiraniValue->setBrush(QBrush(C_LED_GREEN));
+    llPiraniValue->setPos(75, PANEL_Y + 88);
+    llPiraniValue->setZValue(11);
+    m_scene->addItem(llPiraniValue);
 
-    // Vent Time
-    QGraphicsSimpleTextItem *ventLabel = new QGraphicsSimpleTextItem("Vent Time Left:");
-    ventLabel->setFont(QFont("Arial", 9));
-    ventLabel->setBrush(QBrush(Qt::black));
-    ventLabel->setPos(20, 630);
-    ventLabel->setZValue(10);
-    m_scene->addItem(ventLabel);
+    // Vent Time Left
+    QGraphicsSimpleTextItem *llVentLbl = new QGraphicsSimpleTextItem("Vent Time:", nullptr);
+    llVentLbl->setFont(QFont("Arial", 9));
+    llVentLbl->setBrush(QBrush(Qt::black));
+    llVentLbl->setPos(20, PANEL_Y + 116);
+    llVentLbl->setZValue(10);
+    m_scene->addItem(llVentLbl);
 
-    QGraphicsRectItem *ventBox = new QGraphicsRectItem(110, 627, 60, 20);
-    ventBox->setBrush(QBrush(C_WIN_LIGHT));
-    ventBox->setPen(QPen(Qt::darkGray, 1));
-    ventBox->setZValue(10);
-    m_scene->addItem(ventBox);
+    QGraphicsRectItem *llVentBox = new QGraphicsRectItem(95, PANEL_Y + 113, 70, 20);
+    llVentBox->setBrush(QBrush(C_WIN_LIGHT));
+    llVentBox->setPen(QPen(Qt::darkGray, 1));
+    llVentBox->setZValue(10);
+    m_scene->addItem(llVentBox);
 
-    QGraphicsSimpleTextItem *ventValue = new QGraphicsSimpleTextItem("0 s");
-    ventValue->setFont(QFont("Arial", 9));
-    ventValue->setBrush(QBrush(Qt::black));
-    ventValue->setPos(120, 630);
-    ventValue->setZValue(11);
-    m_scene->addItem(ventValue);
+    QGraphicsSimpleTextItem *llVentValue = new QGraphicsSimpleTextItem("0 secs", nullptr);
+    llVentValue->setFont(QFont("Arial", 9));
+    llVentValue->setBrush(QBrush(Qt::black));
+    llVentValue->setPos(105, PANEL_Y + 116);
+    llVentValue->setZValue(11);
+    m_scene->addItem(llVentValue);
 
-    // ==================== 图例面板 ====================
-    QGraphicsRectItem *legendPanel = new QGraphicsRectItem(410, 530, 380, 150);
-    legendPanel->setBrush(QBrush(C_WIN_GRAY));
-    legendPanel->setPen(QPen(Qt::darkGray, 1));
-    legendPanel->setZValue(0);
-    m_scene->addItem(legendPanel);
+    // Load-Lock 按钮
+    InteractiveButton *llEvacBtn = new InteractiveButton("EVACUATE");
+    llEvacBtn->setPos(200, PANEL_Y + 50);
+    llEvacBtn->setZValue(10);
+    llEvacBtn->setCallback([this]() { onEvacuateClicked(); });
+    m_scene->addItem(llEvacBtn);
 
-    QGraphicsSimpleTextItem *legendTitle = new QGraphicsSimpleTextItem("Legend:");
+    InteractiveButton *llStopBtn = new InteractiveButton("STOP");
+    llStopBtn->setPos(200, PANEL_Y + 80);
+    llStopBtn->setZValue(10);
+    llStopBtn->setCallback([this]() { onStopClicked(); });
+    m_scene->addItem(llStopBtn);
+
+    InteractiveButton *llVentBtn = new InteractiveButton("VENT");
+    llVentBtn->setPos(200, PANEL_Y + 110);
+    llVentBtn->setZValue(10);
+    llVentBtn->setCallback([this]() { onVentClicked(); });
+    m_scene->addItem(llVentBtn);
+
+    // ==================== 底部面板 - Process Chamber 区域 (右侧) ====================
+    QGraphicsRectItem *procPanel = new QGraphicsRectItem(370, PANEL_Y, 340, PANEL_H);
+    procPanel->setBrush(QBrush(C_WIN_GRAY));
+    procPanel->setPen(QPen(Qt::darkGray, 1));
+    procPanel->setZValue(0);
+    m_scene->addItem(procPanel);
+
+    QGraphicsSimpleTextItem *procPanelTitle = new QGraphicsSimpleTextItem("Process Chamber Area", nullptr);
+    procPanelTitle->setFont(QFont("Arial", 10, QFont::Bold));
+    procPanelTitle->setBrush(QBrush(Qt::black));
+    procPanelTitle->setPos(380, PANEL_Y + 10);
+    procPanelTitle->setZValue(10);
+    m_scene->addItem(procPanelTitle);
+
+    // Status
+    QGraphicsSimpleTextItem *procStatusLbl = new QGraphicsSimpleTextItem("Status:", nullptr);
+    procStatusLbl->setFont(QFont("Arial", 9));
+    procStatusLbl->setBrush(QBrush(Qt::black));
+    procStatusLbl->setPos(380, PANEL_Y + 35);
+    procStatusLbl->setZValue(10);
+    m_scene->addItem(procStatusLbl);
+
+    QGraphicsSimpleTextItem *procStatusValue = new QGraphicsSimpleTextItem("Base pressure reached", nullptr);
+    procStatusValue->setFont(QFont("Arial", 9, QFont::Bold));
+    procStatusValue->setBrush(QBrush(C_LED_GREEN));
+    procStatusValue->setPos(430, PANEL_Y + 35);
+    procStatusValue->setZValue(10);
+    m_scene->addItem(procStatusValue);
+
+    // Lid
+    QGraphicsSimpleTextItem *procLidLbl = new QGraphicsSimpleTextItem("Lid:", nullptr);
+    procLidLbl->setFont(QFont("Arial", 9));
+    procLidLbl->setBrush(QBrush(Qt::black));
+    procLidLbl->setPos(380, PANEL_Y + 58);
+    procLidLbl->setZValue(10);
+    m_scene->addItem(procLidLbl);
+
+    QGraphicsRectItem *procLidBox = new QGraphicsRectItem(420, PANEL_Y + 55, 100, 20);
+    procLidBox->setBrush(QBrush(C_WIN_LIGHT));
+    procLidBox->setPen(QPen(Qt::darkGray, 1));
+    procLidBox->setZValue(10);
+    m_scene->addItem(procLidBox);
+
+    QGraphicsSimpleTextItem *procLidValue = new QGraphicsSimpleTextItem("CLOSED", nullptr);
+    procLidValue->setFont(QFont("Arial", 9));
+    procLidValue->setBrush(QBrush(Qt::black));
+    procLidValue->setPos(445, PANEL_Y + 58);
+    procLidValue->setZValue(11);
+    m_scene->addItem(procLidValue);
+
+    // Process Interlock
+    QGraphicsSimpleTextItem *procIntLbl = new QGraphicsSimpleTextItem("Interlock:", nullptr);
+    procIntLbl->setFont(QFont("Arial", 9));
+    procIntLbl->setBrush(QBrush(Qt::black));
+    procIntLbl->setPos(380, PANEL_Y + 83);
+    procIntLbl->setZValue(10);
+    m_scene->addItem(procIntLbl);
+
+    LEDIndicator *procIntLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN_DARK);
+    procIntLed->setPos(445, PANEL_Y + 78);
+    procIntLed->setZValue(10);
+    m_scene->addItem(procIntLed);
+
+    QGraphicsSimpleTextItem *procIntValue = new QGraphicsSimpleTextItem("OK", nullptr);
+    procIntValue->setFont(QFont("Arial", 9, QFont::Bold));
+    procIntValue->setBrush(QBrush(C_LED_GREEN));
+    procIntValue->setPos(460, PANEL_Y + 83);
+    procIntValue->setZValue(10);
+    m_scene->addItem(procIntValue);
+
+    // Penning
+    QGraphicsSimpleTextItem *penningLbl = new QGraphicsSimpleTextItem("Penning:", nullptr);
+    penningLbl->setFont(QFont("Arial", 9));
+    penningLbl->setBrush(QBrush(Qt::black));
+    penningLbl->setPos(540, PANEL_Y + 58);
+    penningLbl->setZValue(10);
+    m_scene->addItem(penningLbl);
+
+    QGraphicsRectItem *penningBox = new QGraphicsRectItem(595, PANEL_Y + 55, 100, 20);
+    penningBox->setBrush(QBrush(Qt::black));
+    penningBox->setPen(Qt::NoPen);
+    penningBox->setZValue(10);
+    m_scene->addItem(penningBox);
+
+    QGraphicsSimpleTextItem *penningValue = new QGraphicsSimpleTextItem("3.50e-05 Torr", nullptr);
+    penningValue->setFont(QFont("Courier New", 9));
+    penningValue->setBrush(QBrush(C_LED_GREEN));
+    penningValue->setPos(600, PANEL_Y + 58);
+    penningValue->setZValue(11);
+    m_scene->addItem(penningValue);
+
+    // Cm Gauge
+    QGraphicsSimpleTextItem *cmLbl = new QGraphicsSimpleTextItem("Cm:", nullptr);
+    cmLbl->setFont(QFont("Arial", 9));
+    cmLbl->setBrush(QBrush(Qt::black));
+    cmLbl->setPos(540, PANEL_Y + 83);
+    cmLbl->setZValue(10);
+    m_scene->addItem(cmLbl);
+
+    QGraphicsRectItem *cmBox = new QGraphicsRectItem(570, PANEL_Y + 80, 60, 20);
+    cmBox->setBrush(QBrush(C_WIN_LIGHT));
+    cmBox->setPen(QPen(Qt::darkGray, 1));
+    cmBox->setZValue(10);
+    m_scene->addItem(cmBox);
+
+    QGraphicsSimpleTextItem *cmValue = new QGraphicsSimpleTextItem("2 mTorr", nullptr);
+    cmValue->setFont(QFont("Arial", 9));
+    cmValue->setBrush(QBrush(Qt::black));
+    cmValue->setPos(575, PANEL_Y + 83);
+    cmValue->setZValue(11);
+    m_scene->addItem(cmValue);
+
+    // Vent Time Left
+    QGraphicsSimpleTextItem *procVentLbl = new QGraphicsSimpleTextItem("Vent Time:", nullptr);
+    procVentLbl->setFont(QFont("Arial", 9));
+    procVentLbl->setBrush(QBrush(Qt::black));
+    procVentLbl->setPos(380, PANEL_Y + 116);
+    procVentLbl->setZValue(10);
+    m_scene->addItem(procVentLbl);
+
+    QGraphicsRectItem *procVentBox = new QGraphicsRectItem(455, PANEL_Y + 113, 70, 20);
+    procVentBox->setBrush(QBrush(C_WIN_LIGHT));
+    procVentBox->setPen(QPen(Qt::darkGray, 1));
+    procVentBox->setZValue(10);
+    m_scene->addItem(procVentBox);
+
+    QGraphicsSimpleTextItem *procVentValue = new QGraphicsSimpleTextItem("0 secs", nullptr);
+    procVentValue->setFont(QFont("Arial", 9));
+    procVentValue->setBrush(QBrush(Qt::black));
+    procVentValue->setPos(465, PANEL_Y + 116);
+    procVentValue->setZValue(11);
+    m_scene->addItem(procVentValue);
+
+    // Process Chamber 按钮
+    InteractiveButton *procEvacBtn = new InteractiveButton("EVACUATE");
+    procEvacBtn->setPos(560, PANEL_Y + 50);
+    procEvacBtn->setZValue(10);
+    procEvacBtn->setCallback([this]() { onEvacuateClicked(); });
+    m_scene->addItem(procEvacBtn);
+
+    InteractiveButton *procStopBtn = new InteractiveButton("STOP");
+    procStopBtn->setPos(560, PANEL_Y + 80);
+    procStopBtn->setZValue(10);
+    procStopBtn->setCallback([this]() { onStopClicked(); });
+    m_scene->addItem(procStopBtn);
+
+    InteractiveButton *procVentBtn = new InteractiveButton("VENT");
+    procVentBtn->setPos(560, PANEL_Y + 110);
+    procVentBtn->setZValue(10);
+    procVentBtn->setCallback([this]() { onVentClicked(); });
+    m_scene->addItem(procVentBtn);
+
+    // ==================== 底部右侧 - 另一部分面板 ====================
+    QGraphicsRectItem *rightPanel = new QGraphicsRectItem(730, PANEL_Y, 360, PANEL_H);
+    rightPanel->setBrush(QBrush(C_WIN_GRAY));
+    rightPanel->setPen(QPen(Qt::darkGray, 1));
+    rightPanel->setZValue(0);
+    m_scene->addItem(rightPanel);
+
+    QGraphicsSimpleTextItem *rightTitle = new QGraphicsSimpleTextItem("System Status", nullptr);
+    rightTitle->setFont(QFont("Arial", 10, QFont::Bold));
+    rightTitle->setBrush(QBrush(Qt::black));
+    rightTitle->setPos(740, PANEL_Y + 10);
+    rightTitle->setZValue(10);
+    m_scene->addItem(rightTitle);
+
+    // Connection Status
+    QGraphicsSimpleTextItem *connLbl = new QGraphicsSimpleTextItem("Connection:", nullptr);
+    connLbl->setFont(QFont("Arial", 9));
+    connLbl->setBrush(QBrush(Qt::black));
+    connLbl->setPos(740, PANEL_Y + 38);
+    connLbl->setZValue(10);
+    m_scene->addItem(connLbl);
+
+    LEDIndicator *connLed = new LEDIndicator(false, C_LED_GREEN, C_LED_GREEN_DARK);
+    connLed->setPos(820, PANEL_Y + 33);
+    connLed->setZValue(10);
+    m_scene->addItem(connLed);
+
+    QGraphicsSimpleTextItem *connValue = new QGraphicsSimpleTextItem("Disconnected", nullptr);
+    connValue->setFont(QFont("Arial", 9, QFont::Bold));
+    connValue->setBrush(QBrush(C_LED_RED));
+    connValue->setPos(840, PANEL_Y + 38);
+    connValue->setZValue(10);
+    m_scene->addItem(connValue);
+
+    // Host
+    QGraphicsSimpleTextItem *hostLbl = new QGraphicsSimpleTextItem("Host:", nullptr);
+    hostLbl->setFont(QFont("Arial", 9));
+    hostLbl->setBrush(QBrush(Qt::black));
+    hostLbl->setPos(740, PANEL_Y + 63);
+    hostLbl->setZValue(10);
+    m_scene->addItem(hostLbl);
+
+    QGraphicsRectItem *hostBox = new QGraphicsRectItem(780, PANEL_Y + 60, 140, 20);
+    hostBox->setBrush(QBrush(C_WIN_LIGHT));
+    hostBox->setPen(QPen(Qt::darkGray, 1));
+    hostBox->setZValue(10);
+    m_scene->addItem(hostBox);
+
+    QGraphicsSimpleTextItem *hostValue = new QGraphicsSimpleTextItem("192.168.1.100", nullptr);
+    hostValue->setFont(QFont("Arial", 9));
+    hostValue->setBrush(QBrush(Qt::black));
+    hostValue->setPos(785, PANEL_Y + 63);
+    hostValue->setZValue(11);
+    m_scene->addItem(hostValue);
+
+    // Port
+    QGraphicsSimpleTextItem *portLbl = new QGraphicsSimpleTextItem("Port:", nullptr);
+    portLbl->setFont(QFont("Arial", 9));
+    portLbl->setBrush(QBrush(Qt::black));
+    portLbl->setPos(740, PANEL_Y + 90);
+    portLbl->setZValue(10);
+    m_scene->addItem(portLbl);
+
+    QGraphicsRectItem *portBox = new QGraphicsRectItem(780, PANEL_Y + 87, 60, 20);
+    portBox->setBrush(QBrush(C_WIN_LIGHT));
+    portBox->setPen(QPen(Qt::darkGray, 1));
+    portBox->setZValue(10);
+    m_scene->addItem(portBox);
+
+    QGraphicsSimpleTextItem *portValue = new QGraphicsSimpleTextItem("5025", nullptr);
+    portValue->setFont(QFont("Arial", 9));
+    portValue->setBrush(QBrush(Qt::black));
+    portValue->setPos(795, PANEL_Y + 90);
+    portValue->setZValue(11);
+    m_scene->addItem(portValue);
+
+    // Recipe
+    QGraphicsSimpleTextItem *recipeLbl = new QGraphicsSimpleTextItem("Recipe:", nullptr);
+    recipeLbl->setFont(QFont("Arial", 9));
+    recipeLbl->setBrush(QBrush(Qt::black));
+    recipeLbl->setPos(870, PANEL_Y + 63);
+    recipeLbl->setZValue(10);
+    m_scene->addItem(recipeLbl);
+
+    QGraphicsSimpleTextItem *recipeValue = new QGraphicsSimpleTextItem("None", nullptr);
+    recipeValue->setFont(QFont("Arial", 9));
+    recipeValue->setBrush(QBrush(Qt::black));
+    recipeValue->setPos(915, PANEL_Y + 63);
+    recipeValue->setZValue(10);
+    m_scene->addItem(recipeValue);
+
+    // Step
+    QGraphicsSimpleTextItem *stepLbl = new QGraphicsSimpleTextItem("Step:", nullptr);
+    stepLbl->setFont(QFont("Arial", 9));
+    stepLbl->setBrush(QBrush(Qt::black));
+    stepLbl->setPos(870, PANEL_Y + 90);
+    stepLbl->setZValue(10);
+    m_scene->addItem(stepLbl);
+
+    QGraphicsSimpleTextItem *stepValue = new QGraphicsSimpleTextItem("0/0", nullptr);
+    stepValue->setFont(QFont("Arial", 9));
+    stepValue->setBrush(QBrush(Qt::black));
+    stepValue->setPos(905, PANEL_Y + 90);
+    stepValue->setZValue(10);
+    m_scene->addItem(stepValue);
+
+    // Cycle
+    QGraphicsSimpleTextItem *cycleLbl = new QGraphicsSimpleTextItem("Cycle:", nullptr);
+    cycleLbl->setFont(QFont("Arial", 9));
+    cycleLbl->setBrush(QBrush(Qt::black));
+    cycleLbl->setPos(960, PANEL_Y + 90);
+    cycleLbl->setZValue(10);
+    m_scene->addItem(cycleLbl);
+
+    QGraphicsSimpleTextItem *cycleValue = new QGraphicsSimpleTextItem("0/0", nullptr);
+    cycleValue->setFont(QFont("Arial", 9));
+    cycleValue->setBrush(QBrush(Qt::black));
+    cycleValue->setPos(1000, PANEL_Y + 90);
+    cycleValue->setZValue(10);
+    m_scene->addItem(cycleValue);
+
+    // Legend
+    QGraphicsSimpleTextItem *legendTitle = new QGraphicsSimpleTextItem("Legend:", nullptr);
     legendTitle->setFont(QFont("Arial", 10, QFont::Bold));
     legendTitle->setBrush(QBrush(Qt::black));
-    legendTitle->setPos(420, 540);
+    legendTitle->setPos(740, PANEL_Y + 115);
     legendTitle->setZValue(10);
     m_scene->addItem(legendTitle);
 
-    // 第一列
     LEDIndicator *vOpenLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN);
-    vOpenLed->setPos(420, 570);
+    vOpenLed->setPos(800, PANEL_Y + 112);
     vOpenLed->setZValue(10);
     m_scene->addItem(vOpenLed);
-
-    QGraphicsSimpleTextItem *vOpenLabel = new QGraphicsSimpleTextItem("Valve Open");
-    vOpenLabel->setFont(QFont("Arial", 9));
-    vOpenLabel->setBrush(QBrush(Qt::black));
-    vOpenLabel->setPos(435, 573);
-    vOpenLabel->setZValue(10);
-    m_scene->addItem(vOpenLabel);
+    QGraphicsSimpleTextItem *vOpenLbl = new QGraphicsSimpleTextItem("Valve Open", nullptr);
+    vOpenLbl->setFont(QFont("Arial", 8));
+    vOpenLbl->setBrush(QBrush(Qt::black));
+    vOpenLbl->setPos(815, PANEL_Y + 115);
+    vOpenLbl->setZValue(10);
+    m_scene->addItem(vOpenLbl);
 
     LEDIndicator *vClosedLed = new LEDIndicator(true, C_LED_RED, C_LED_RED);
-    vClosedLed->setPos(420, 600);
+    vClosedLed->setPos(895, PANEL_Y + 112);
     vClosedLed->setZValue(10);
     m_scene->addItem(vClosedLed);
-
-    QGraphicsSimpleTextItem *vClosedLabel = new QGraphicsSimpleTextItem("Valve Closed");
-    vClosedLabel->setFont(QFont("Arial", 9));
-    vClosedLabel->setBrush(QBrush(Qt::black));
-    vClosedLabel->setPos(435, 603);
-    vClosedLabel->setZValue(10);
-    m_scene->addItem(vClosedLabel);
+    QGraphicsSimpleTextItem *vClosedLbl = new QGraphicsSimpleTextItem("Valve Closed", nullptr);
+    vClosedLbl->setFont(QFont("Arial", 8));
+    vClosedLbl->setBrush(QBrush(Qt::black));
+    vClosedLbl->setPos(910, PANEL_Y + 115);
+    vClosedLbl->setZValue(10);
+    m_scene->addItem(vClosedLbl);
 
     LEDIndicator *pumpRunLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN);
-    pumpRunLed->setPos(420, 630);
+    pumpRunLed->setPos(990, PANEL_Y + 112);
     pumpRunLed->setZValue(10);
     m_scene->addItem(pumpRunLed);
-
-    QGraphicsSimpleTextItem *pumpRunLabel = new QGraphicsSimpleTextItem("Pump Running");
-    pumpRunLabel->setFont(QFont("Arial", 9));
-    pumpRunLabel->setBrush(QBrush(Qt::black));
-    pumpRunLabel->setPos(435, 633);
-    pumpRunLabel->setZValue(10);
-    m_scene->addItem(pumpRunLabel);
-
-    // 第二列
-    LEDIndicator *procActLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN);
-    procActLed->setPos(590, 570);
-    procActLed->setZValue(10);
-    m_scene->addItem(procActLed);
-
-    QGraphicsSimpleTextItem *procActLabel = new QGraphicsSimpleTextItem("Process Active");
-    procActLabel->setFont(QFont("Arial", 9));
-    procActLabel->setBrush(QBrush(Qt::black));
-    procActLabel->setPos(605, 573);
-    procActLabel->setZValue(10);
-    m_scene->addItem(procActLabel);
-
-    LEDIndicator *intOkLed = new LEDIndicator(true, C_LED_GREEN, C_LED_GREEN);
-    intOkLed->setPos(590, 600);
-    intOkLed->setZValue(10);
-    m_scene->addItem(intOkLed);
-
-    QGraphicsSimpleTextItem *intOkLabel = new QGraphicsSimpleTextItem("Interlock OK");
-    intOkLabel->setFont(QFont("Arial", 9));
-    intOkLabel->setBrush(QBrush(Qt::black));
-    intOkLabel->setPos(605, 603);
-    intOkLabel->setZValue(10);
-    m_scene->addItem(intOkLabel);
-
-    LEDIndicator *intFaultLed = new LEDIndicator(true, C_LED_RED, C_LED_RED);
-    intFaultLed->setPos(590, 630);
-    intFaultLed->setZValue(10);
-    m_scene->addItem(intFaultLed);
-
-    QGraphicsSimpleTextItem *intFaultLabel = new QGraphicsSimpleTextItem("Interlock Fault");
-    intFaultLabel->setFont(QFont("Arial", 9));
-    intFaultLabel->setBrush(QBrush(Qt::black));
-    intFaultLabel->setPos(605, 633);
-    intFaultLabel->setZValue(10);
-    m_scene->addItem(intFaultLabel);
-
-    // 第三列
-    LEDIndicator *waterFaultLed = new LEDIndicator(true, C_LED_RED, C_LED_RED);
-    waterFaultLed->setPos(720, 570);
-    waterFaultLed->setZValue(10);
-    m_scene->addItem(waterFaultLed);
-
-    QGraphicsSimpleTextItem *waterFaultLabel = new QGraphicsSimpleTextItem("Water Fault");
-    waterFaultLabel->setFont(QFont("Arial", 9));
-    waterFaultLabel->setBrush(QBrush(Qt::black));
-    waterFaultLabel->setPos(735, 573);
-    waterFaultLabel->setZValue(10);
-    m_scene->addItem(waterFaultLabel);
+    QGraphicsSimpleTextItem *pumpRunLbl = new QGraphicsSimpleTextItem("Pump Running", nullptr);
+    pumpRunLbl->setFont(QFont("Arial", 8));
+    pumpRunLbl->setBrush(QBrush(Qt::black));
+    pumpRunLbl->setPos(1005, PANEL_Y + 115);
+    pumpRunLbl->setZValue(10);
+    m_scene->addItem(pumpRunLbl);
 }
 
 // 菜单切换处理
