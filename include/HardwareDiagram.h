@@ -9,11 +9,16 @@
 #include <QMap>
 #include <QString>
 #include <QObject>
+#include <QPen>
 
 /**
  * HardwareDiagram - Oxford ICP133 RIE 设备硬件框架图
  * 使用 Qt Graphics View Framework 绘制设备示意图
  */
+
+// 前向声明
+class MenuButton;
+class MenuPanel;
 
 // 组件类型枚举
 enum class ComponentType {
@@ -76,6 +81,7 @@ public:
 protected:
     void updateAppearance() override;
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
 // RF 发生器
@@ -86,6 +92,7 @@ public:
 
 protected:
     void updateAppearance() override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
 // ICP 发生器
@@ -96,6 +103,7 @@ public:
 
 protected:
     void updateAppearance() override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
 // 气体 MFC
@@ -108,6 +116,7 @@ public:
 
 protected:
     void updateAppearance() override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     int m_channel;
 };
 
@@ -145,6 +154,7 @@ public:
 
 protected:
     void updateAppearance() override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
 // 温度传感器/Chuck
@@ -155,6 +165,7 @@ public:
 
 protected:
     void updateAppearance() override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
 // 管道
@@ -186,7 +197,7 @@ public:
     // 更新组件状态
     void updateComponentState(const QString &name, ComponentState state);
 
-    // 更新组件值（压力、功率、温度等）
+    // 更新组件值（压力、功率，温度等）
     void updateComponentValue(const QString &name, const QString &value);
 
     // 更新阀门状态
@@ -198,17 +209,37 @@ public:
     // 获取组件
     HardwareComponent* getComponent(const QString &name) const;
 
-    // 添加管道线
-    void addPipeLine(qreal x1, qreal y1, qreal x2, qreal y2, const QPen &pen);
-
 signals:
     void componentClicked(const QString &name, ComponentType type);
+    void evacuateRequested();
+    void stopRequested();
+    void ventRequested();
+
+public slots:
+    void closeAllMenus();
 
 private slots:
-    void onItemClicked(QGraphicsSceneMouseEvent *event);
+    void onSystemMenuToggle();
+    void onProcessMenuToggle();
+    void onManagerMenuToggle();
+    void onEvacuateClicked();
+    void onStopClicked();
+    void onVentClicked();
 
 private:
+    void addPipeLine(qreal x1, qreal y1, qreal x2, qreal y2, const QPen &pen);
+
     QGraphicsScene *m_scene;
+
+    // 菜单按钮
+    MenuButton *m_systemBtn;
+    MenuButton *m_processBtn;
+    MenuButton *m_managerBtn;
+
+    // 菜单面板
+    MenuPanel *m_systemMenu;
+    MenuPanel *m_processMenu;
+    MenuPanel *m_managerMenu;
 
     // 组件映射
     QMap<QString, HardwareComponent*> m_components;
