@@ -980,23 +980,15 @@ void HardwareDiagram::setupLayout()
     menuBar->setZValue(0);
     m_scene->addItem(menuBar);
 
-    // 页面标题 "Pump control page"
-    QGraphicsSimpleTextItem *pageTitle = new QGraphicsSimpleTextItem("Pump control page");
-    pageTitle->setFont(QFont("Arial", 11, QFont::Bold));
-    pageTitle->setBrush(QBrush(Qt::black));
-    pageTitle->setPos(10, 14);
-    pageTitle->setZValue(10);
-    m_scene->addItem(pageTitle);
-
     // System 按钮
     m_systemBtn = new MenuButton("System");
-    m_systemBtn->setPos(180, 10);
+    m_systemBtn->setPos(10, 10);
     m_systemBtn->setZValue(10);
     m_scene->addItem(m_systemBtn);
 
     // System 下拉菜单
     m_systemMenu = new MenuPanel();
-    m_systemMenu->setPos(180, 22);
+    m_systemMenu->setPos(10, 22);
     m_systemMenu->addMenuItem("Pumping", 1, nullptr);
     m_systemMenu->addMenuItem("Venting", 2, nullptr);
     m_systemMenu->addMenuItem("Configuration", 3, nullptr);
@@ -1008,13 +1000,13 @@ void HardwareDiagram::setupLayout()
 
     // Process 按钮 (带紫色活动指示器)
     m_processBtn = new MenuButton("Process");
-    m_processBtn->setPos(285, 10);
+    m_processBtn->setPos(115, 10);
     m_processBtn->setZValue(10);
     m_scene->addItem(m_processBtn);
 
     // Process 下拉菜单
     m_processMenu = new MenuPanel();
-    m_processMenu->setPos(285, 22);
+    m_processMenu->setPos(115, 22);
     m_processMenu->addMenuItem("Start", 10, nullptr);
     m_processMenu->addMenuItem("Stop", 11, nullptr);
     m_processMenu->addMenuItem("Edit Recipe", 12, nullptr);
@@ -1026,13 +1018,13 @@ void HardwareDiagram::setupLayout()
 
     // Manager 按钮
     m_managerBtn = new MenuButton("Manager");
-    m_managerBtn->setPos(390, 10);
+    m_managerBtn->setPos(220, 10);
     m_managerBtn->setZValue(10);
     m_scene->addItem(m_managerBtn);
 
     // Manager 下拉菜单
     m_managerMenu = new MenuPanel();
-    m_managerMenu->setPos(390, 22);
+    m_managerMenu->setPos(220, 22);
     m_managerMenu->addMenuItem("Log on", 20, nullptr);
     m_managerMenu->addMenuItem("Log off", 21, nullptr);
     m_managerMenu->addMenuItem("Production Mode", 22, nullptr);
@@ -1041,8 +1033,16 @@ void HardwareDiagram::setupLayout()
     m_managerMenu->setVisible(false);
     m_scene->addItem(m_managerMenu);
 
+    // 页面标题 "Pump control page"
+    QGraphicsSimpleTextItem *pageTitle = new QGraphicsSimpleTextItem("Pump control page", nullptr);
+    pageTitle->setFont(QFont("Arial", 11, QFont::Bold));
+    pageTitle->setBrush(QBrush(Qt::black));
+    pageTitle->setPos(340, 14);
+    pageTitle->setZValue(10);
+    m_scene->addItem(pageTitle);
+
     // PUMP CONTROL 标签
-    QGraphicsSimpleTextItem *pumpLabel = new QGraphicsSimpleTextItem("PUMP CONTROL");
+    QGraphicsSimpleTextItem *pumpLabel = new QGraphicsSimpleTextItem("PUMP CONTROL", nullptr);
     pumpLabel->setFont(QFont("Arial", 10, QFont::Bold));
     pumpLabel->setBrush(QBrush(Qt::black));
     pumpLabel->setPos(510, 14);
@@ -1592,84 +1592,84 @@ void HardwareDiagram::setupLayout()
     procIntValue->setZValue(10);
     m_scene->addItem(procIntValue);
 
-    // Penning
-    QGraphicsSimpleTextItem *penningLbl = new QGraphicsSimpleTextItem("Penning:", nullptr);
-    penningLbl->setFont(QFont("Arial", 9));
-    penningLbl->setBrush(QBrush(Qt::black));
-    penningLbl->setPos(540, PANEL_Y + 58);
-    penningLbl->setZValue(10);
-    m_scene->addItem(penningLbl);
-
-    QGraphicsRectItem *penningBox = new QGraphicsRectItem(595, PANEL_Y + 55, 100, 20);
-    penningBox->setBrush(QBrush(Qt::black));
-    penningBox->setPen(Qt::NoPen);
-    penningBox->setZValue(10);
-    m_scene->addItem(penningBox);
-
-    QGraphicsSimpleTextItem *penningValue = new QGraphicsSimpleTextItem("3.50e-05 Torr", nullptr);
-    penningValue->setFont(QFont("Courier New", 9));
-    penningValue->setBrush(QBrush(C_LED_GREEN));
-    penningValue->setPos(600, PANEL_Y + 58);
-    penningValue->setZValue(11);
-    m_scene->addItem(penningValue);
-
-    // Cm Gauge
-    QGraphicsSimpleTextItem *cmLbl = new QGraphicsSimpleTextItem("Cm:", nullptr);
-    cmLbl->setFont(QFont("Arial", 9));
-    cmLbl->setBrush(QBrush(Qt::black));
-    cmLbl->setPos(540, PANEL_Y + 83);
-    cmLbl->setZValue(10);
-    m_scene->addItem(cmLbl);
-
-    QGraphicsRectItem *cmBox = new QGraphicsRectItem(570, PANEL_Y + 80, 60, 20);
-    cmBox->setBrush(QBrush(C_WIN_LIGHT));
-    cmBox->setPen(QPen(Qt::darkGray, 1));
-    cmBox->setZValue(10);
-    m_scene->addItem(cmBox);
-
-    QGraphicsSimpleTextItem *cmValue = new QGraphicsSimpleTextItem("2 mTorr", nullptr);
-    cmValue->setFont(QFont("Arial", 9));
-    cmValue->setBrush(QBrush(Qt::black));
-    cmValue->setPos(575, PANEL_Y + 83);
-    cmValue->setZValue(11);
-    m_scene->addItem(cmValue);
-
-    // Vent Time Left
-    QGraphicsSimpleTextItem *procVentLbl = new QGraphicsSimpleTextItem("Vent Time:", nullptr);
+    // Vent Time Left (左侧第四行)
+    QGraphicsSimpleTextItem *procVentLbl = new QGraphicsSimpleTextItem("Vent:", nullptr);
     procVentLbl->setFont(QFont("Arial", 9));
     procVentLbl->setBrush(QBrush(Qt::black));
-    procVentLbl->setPos(380, PANEL_Y + 116);
+    procVentLbl->setPos(380, PANEL_Y + 103);
     procVentLbl->setZValue(10);
     m_scene->addItem(procVentLbl);
 
-    QGraphicsRectItem *procVentBox = new QGraphicsRectItem(455, PANEL_Y + 113, 70, 20);
+    QGraphicsRectItem *procVentBox = new QGraphicsRectItem(420, PANEL_Y + 100, 60, 20);
     procVentBox->setBrush(QBrush(C_WIN_LIGHT));
     procVentBox->setPen(QPen(Qt::darkGray, 1));
     procVentBox->setZValue(10);
     m_scene->addItem(procVentBox);
 
-    QGraphicsSimpleTextItem *procVentValue = new QGraphicsSimpleTextItem("0 secs", nullptr);
+    QGraphicsSimpleTextItem *procVentValue = new QGraphicsSimpleTextItem("0 s", nullptr);
     procVentValue->setFont(QFont("Arial", 9));
     procVentValue->setBrush(QBrush(Qt::black));
-    procVentValue->setPos(465, PANEL_Y + 116);
+    procVentValue->setPos(428, PANEL_Y + 103);
     procVentValue->setZValue(11);
     m_scene->addItem(procVentValue);
 
-    // Process Chamber 按钮
-    InteractiveButton *procEvacBtn = new InteractiveButton("EVACUATE");
-    procEvacBtn->setPos(560, PANEL_Y + 50);
+    // Penning (右边上)
+    QGraphicsSimpleTextItem *penningLbl = new QGraphicsSimpleTextItem("Penning:", nullptr);
+    penningLbl->setFont(QFont("Arial", 9));
+    penningLbl->setBrush(QBrush(Qt::black));
+    penningLbl->setPos(510, PANEL_Y + 58);
+    penningLbl->setZValue(10);
+    m_scene->addItem(penningLbl);
+
+    QGraphicsRectItem *penningBox = new QGraphicsRectItem(570, PANEL_Y + 55, 90, 20);
+    penningBox->setBrush(QBrush(Qt::black));
+    penningBox->setPen(Qt::NoPen);
+    penningBox->setZValue(10);
+    m_scene->addItem(penningBox);
+
+    QGraphicsSimpleTextItem *penningValue = new QGraphicsSimpleTextItem("3.50e-05", nullptr);
+    penningValue->setFont(QFont("Courier New", 9));
+    penningValue->setBrush(QBrush(C_LED_GREEN));
+    penningValue->setPos(575, PANEL_Y + 58);
+    penningValue->setZValue(11);
+    m_scene->addItem(penningValue);
+
+    // Cm Gauge (右边下)
+    QGraphicsSimpleTextItem *cmLbl = new QGraphicsSimpleTextItem("Cm:", nullptr);
+    cmLbl->setFont(QFont("Arial", 9));
+    cmLbl->setBrush(QBrush(Qt::black));
+    cmLbl->setPos(510, PANEL_Y + 83);
+    cmLbl->setZValue(10);
+    m_scene->addItem(cmLbl);
+
+    QGraphicsRectItem *cmBox = new QGraphicsRectItem(545, PANEL_Y + 80, 50, 20);
+    cmBox->setBrush(QBrush(C_WIN_LIGHT));
+    cmBox->setPen(QPen(Qt::darkGray, 1));
+    cmBox->setZValue(10);
+    m_scene->addItem(cmBox);
+
+    QGraphicsSimpleTextItem *cmValue = new QGraphicsSimpleTextItem("2 mT", nullptr);
+    cmValue->setFont(QFont("Arial", 9));
+    cmValue->setBrush(QBrush(Qt::black));
+    cmValue->setPos(550, PANEL_Y + 83);
+    cmValue->setZValue(11);
+    m_scene->addItem(cmValue);
+
+    // Process Chamber 按钮 (最右侧，竖排)
+    InteractiveButton *procEvacBtn = new InteractiveButton("EVAC");
+    procEvacBtn->setPos(670, PANEL_Y + 40);
     procEvacBtn->setZValue(10);
     procEvacBtn->setCallback([this]() { onEvacuateClicked(); });
     m_scene->addItem(procEvacBtn);
 
     InteractiveButton *procStopBtn = new InteractiveButton("STOP");
-    procStopBtn->setPos(560, PANEL_Y + 80);
+    procStopBtn->setPos(670, PANEL_Y + 70);
     procStopBtn->setZValue(10);
     procStopBtn->setCallback([this]() { onStopClicked(); });
     m_scene->addItem(procStopBtn);
 
     InteractiveButton *procVentBtn = new InteractiveButton("VENT");
-    procVentBtn->setPos(560, PANEL_Y + 110);
+    procVentBtn->setPos(670, PANEL_Y + 100);
     procVentBtn->setZValue(10);
     procVentBtn->setCallback([this]() { onVentClicked(); });
     m_scene->addItem(procVentBtn);
